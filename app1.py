@@ -307,7 +307,7 @@ def end_experiment(exp_end, x1, x2, p1, p2, mturk):
         raise PreventUpdate
     if not mturk:
         raise PreventUpdate
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database_app1.db')
     sql = '''INSERT INTO results VALUES(?,?,?,?,?,?)'''
     conn.execute(sql, ("app1", mturk, x1, p1, x2, p2))
     conn.commit()
@@ -317,7 +317,7 @@ def end_experiment(exp_end, x1, x2, p1, p2, mturk):
     
 
 def create_db():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database_app1.db')
     conn.execute('CREATE TABLE results (exp_id TEXT, mturk_id TEXT, q1 TEXT, p1 TEXT, q2 TEXT, p2 TEXT)')
     conn.commit()
     conn.close()
