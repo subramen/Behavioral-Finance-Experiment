@@ -12,33 +12,35 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash('app1', external_stylesheets=external_stylesheets)
 
 
+WINDOW_SIZE = 500
+minutes_per_second = 6
+price_multiplier = 10
+
+end_P1 = 330//minutes_per_second
+end_P2 = 510//minutes_per_second
+
+
+
 price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
 price_df = price_df[price_df.Volume>0]
-price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
+price_df=price_df.iloc[1000:1650]
 price_df.index = range(len(price_df))
-price_df['index2'] = price_df.index//3
-
-
-
+price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
+price_df['index2'] = price_df.index//minutes_per_second
 MAX_LEN = len(price_df)-1
-WINDOW_SIZE = 120
-minutes_per_second = 3
-end_P1 = 102
-end_P2 = 408
-status0 = {'cash':10000, 'stock':10, 'position':0} #defaults
-app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"}
+price_df['High']*=10
 
 
 
-
-             
+status0 = {'cash':40000, 'stock':0, 'position':0} #defaults
+app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"}             
 screen1 = html.Div(id='screen1', style={'display':'block', 'float':'center'},\
                    children=[html.H3('To start, click Begin'), html.Br(), html.Button('Begin', id='user-begin')])
 
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         # TITLE
         html.H3(children='Stock Market'),
-        html.P("Hover mouse over graph to know more"),
+        html.P("Hover mouse over graph to know more. Click and drag to zoom in. Double-click to zoom out"),
         
         # INTERNAL VARIABLES
         dcc.Interval(id='interval-component',interval=1000, n_intervals=0, disabled=True),
@@ -49,64 +51,63 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         dcc.Store(id='p&l-store', data=status0['position']),
         dcc.Store(id='today_dt-store', data='16 Sep-09:30'),
         dcc.Store(id='orig-inv'),
-        
         dcc.Store(id='stock-qty-1', data=0),
         dcc.Store(id='stock-qty-2', data=0),
         dcc.Store(id='txn-price-1', data=0),
         dcc.Store(id='txn-price-2', data=0),
-        
         dcc.Store(id='data-end', data=False),
         
-        html.Div(id='toprow', style={'width':'100%', 'overflow':'auto'}, children=[
-                html.Div(dcc.Graph(id="price-graph"), style={'float':'left', 'width':'70%'}),
-                html.Div([
-                        html.Table([
-                            html.Tr([html.Th(style={'display':'block'}, children=['Cash']), \
-                                     html.Th(style={'display':'block'}, children=['Stocks Held']), \
-                                     html.Th(style={'display':'block'}, children=['Current Position']), \
-                                     html.Th(style={'display':'block'}, children=['Current P&L'])],
-                                 style={'float':'left', 'display':'block'}),
-                                     
-                            html.Tr([html.Td(style={'display':'block'}, id='cash-str', children="${}".format(status0['cash'])), \
-                                     html.Td(style={'display':'block'}, id='stock-str', children="0"), \
-                                     html.Td(style={'display':'block'}, id='position-str', children="$0"), \
-                                     html.Td(style={'display':'block'}, id='p&l-str', children="$0")],
-                                 style={'float':'left', 'display':'block'})
-                        ]),
-                        html.Br(),html.Br(),
-                        html.H3(id='today_price-str', children="Current Price: $200"),
-                        html.H4(id='today-str', children="Today is 09/16 09:30", style={'color':'blue'})
-                    ], style={'float':'right', 'padding':'30px'}) ,
-                ]),
+        
+        # LAYOUT
+        html.Div(id='toprow', style={'width':'100%', 'overflow':'auto'}, children=[html.Div(dcc.Graph(id="price-graph"))]),
                 
         html.Br(),
-#        html.H3(id='today-str', children="Today is 16 Sep 09:30", style={'color':'blue', 'text-align':'center'}),
-        html.H3(id='ask-bid', children=' ', style={'color':'red'}),
-        html.Div(id='bid_submitted1', style={'display': 'none'}, children='no'),
-        html.Div(id='bid_submitted2', style={'display': 'none'}, children='no'),
-                
+        html.Div(id='bottomrow', style={'width':'100%', 'overflow':'auto'}, children=[
+                html.Div(id='input-col', style={'float':'right', 'width':'40%', 'overflow':'auto'}, children=[
+                    html.H3(id='ask-bid', children=' ', style={'color':'red'}),
+                    html.Div(id='bid_submitted1', style={'display': 'none'}, children='no'),
+                    html.Div(id='bid_submitted2', style={'display': 'none'}, children='no'),
+                    html.Div(id='buy/sell', style={'float':'center', 'overflow':'auto'}, children=[
+                         html.Div(dcc.Input(id="txn", type='number', placeholder='No. of Stocks', min=0), style={'float':'left'}),
+                         dcc.RadioItems(id='buysell', options=[{'label':'BUY', 'value':1}, {'label':'SELL', 'value':-1}], value=1, style={'overflow':'auto'}),
+                         html.Br(),
+                         html.Button('Submit', id='submit', hidden=True),
+                         html.Div(id='buy-sell-status'),
+                         ])]),
 
-        # INPUTS
-         html.Div(id='buy/sell', style={'float':'center', 'overflow':'auto', 'width':'30%'}, children=[
-                 html.Div(dcc.Input(id="txn", type='number', placeholder='No. of Stocks', min=0), style={'float':'left'}),
-                 dcc.RadioItems(id='buysell', options=[{'label':'BUY', 'value':1}, {'label':'SELL', 'value':-1}], value=1, style={'overflow':'auto'}),
-                 html.Br(),
-                 html.Button('Submit', id='submit', hidden=True),
-                 html.Div(id='buy-sell-status')
-        ])
+                html.Div(id='status-col', style={'display':'inline-block', 'width':'25%','overflow':'auto'}, children=[
+                    html.Table([
+                            html.Tr([html.Th(style={'display':'block'}, children=['Available Cash']), \
+                                     html.Th(style={'display':'block'}, children=['Stocks Held']), \
+                                     html.Th(style={'display':'block'}, children=['Holdings Value']), \
+                                     html.Th(style={'display':'block'}, children=['Today is'])],
+                                 style={'float':'left', 'display':'block'}),
+                                     
+                            html.Tr([html.Td(style={'display':'block', 'color':'green'}, id='cash-str', children="${}".format(status0['cash'])), \
+                                     html.Td(style={'display':'block'}, id='stock-str', children="0"), \
+                                     html.Td(style={'display':'block'}, id='position-str', children="$0"), \
+                                     html.Td(style={'display':'block'}, id='today-str', children="09/16 09:30")],
+                                 style={'float':'left', 'display':'block'}),
+                        ])]),
+                                     
+                html.Div(id='calendar-col', style={'float':'left', 'width':'25%','overflow':'auto'}, children=[
+                        html.H3(id='p&l-str', children="$0"),
+                        html.H4(id='today_price-str', children="Current Price: $200"),
+                        ])
+                ])
 ])
                             
            
 screen3 = html.Div(id='screen3', style={'display':'none', 'float':'center'},\
                    children=[html.H3('Enter your MTurk Worker ID to receive compensation'), html.Br(),\
-                             dcc.Input(id='mturk-id', placeholder='Mturk Worker ID'), html.Button('End Task', id='exp-end'),\
+                     
+
+
+        dcc.Input(id='mturk-id', placeholder='Mturk Worker ID'), html.Button('End Task', id='exp-end'),\
                              html.H2(id='ty')])
                  
 
 app.layout = html.Div([screen1, screen2, screen3])
-
-
-
 
 
 
@@ -163,12 +164,12 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
                State('position-store','data'), State('p&l-store','data')])
 def update_today_str(price, date, cash, stock, pos, pnl):
     pnl = pnl or 0
+    d = {'display':'block'}
     if pnl<0:
-        return f"Current Price: ${price}", f"Today is {date}", f"${cash}", \
-            f"{stock}", f"${pos}", f"${pnl}", {'display':'block', 'color':'red'}
-    else:
-        return f"Current Price: ${price}", f"Today is {date}", f"${cash}", \
-            f"{stock}", f"${pos}", f"${pnl}", {'display':'block', 'color':'green'}
+        d={'display':'block', 'color':'red'}
+    if pnl>0:
+        d={'display':'block', 'color':'green'}
+    return f"Current Price: ${price}", f"{date}", f"${cash}", f"{stock}", f"${pos}", f"Net P&L: ${pnl}", d
 
 
     
@@ -196,7 +197,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_clic
                 return True, False, f"Enter number of stocks to buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
             else: #UNPAUSE
                 return False, True, 'Bid Accepted'
-        return False, True, 'Currently not accepting bids'
+        return False, True, 'Not accepting bids'
     else:
         raise PreventUpdate   
     
@@ -251,37 +252,43 @@ def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, 
 def plot_prices(interval):
     ix = interval*minutes_per_second
     pre = max(0, ix-WINDOW_SIZE)
-    df = price_df.iloc[pre:ix]
+    df = price_df[['strtime', 'High', 'Low']].iloc[pre:ix]
+    # pad empty data points 
+    null_df = pd.DataFrame(columns=['strtime','High','Low'])
+    null_df['strtime'] = price_df['strtime'].iloc[ix:ix+2*minutes_per_second]
+    
+    df = pd.concat([df,null_df])
 
         
     fig={'data':[], 'layout':{}}
     
     trace_high = go.Scatter(
-        x=df.strtime,
+        x=df['strtime'],
         y=df['High'],
         name = "Stock High",
         line = dict(color = '#17BECF'),
         opacity = 0.8)
+#    
+#    trace_low = go.Scatter(
+#        x=df['strtime'],
+#        y=df['Low'],
+#        name = "Stock Low",
+#        line = dict(color = '#7F7F7F'),
+#        opacity = 0.8)
     
-    trace_low = go.Scatter(
-        x=df.strtime,
-        y=df['Low'],
-        name = "Stock Low",
-        line = dict(color = '#7F7F7F'),
-        opacity = 0.8)
-    
-    fig['data'] = [trace_high,trace_low]
+#    fig['data'] = [trace_high,trace_low]
+    fig['data'] = [trace_high]
     
     
     fig["layout"]["uirevision"] = "The User is always right"  # Ensures zoom on graph is the same on update
-    fig["layout"]["margin"] = {"t": 10, "l": 50, "b": 70, "r": 25}
+    fig["layout"]["margin"] = {"t": 10, "l": 50, "b": 40, "r": 25}
     fig["layout"]["autosize"] = True
 #    fig["layout"]["height"] = 450
 #    fig["layout"]["width"] = 800
     fig['layout']['xaxis'] = dict()
 #    fig["layout"]["xaxis"]["tickformat"] = "%d %b %H:%M"
     fig["layout"]["xaxis"]["type"] = "category"
-    fig["layout"]["xaxis"]["showticklabels"]=True
+    fig["layout"]["xaxis"]["showticklabels"]=False
     fig["layout"]["xaxis"]["ticks"]="inside"
     fig["layout"]["xaxis"]["tickangle"]=45
     fig["layout"]["xaxis"]["dtick"]=6
