@@ -105,7 +105,5 @@ def end_experiment(exp_end, x1, x2, p1, p2, mturk):
     return utils.end_experiment(exp_end, x1, x2, p1, p2, mturk, app.config['name'])
     
     
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True) 
+def run_server():
+    app.run_server() 
