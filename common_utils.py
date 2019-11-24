@@ -11,10 +11,14 @@ from dash.exceptions import PreventUpdate
 import math
 from plotly import graph_objs as go
 
+import os
+import psycopg2
+DATABASE_URL = os.environ['DATABASE_URL']
+
 
 
 WINDOW_SIZE = 500
-minutes_per_interval = 3
+minutes_per_interval = 15  # CHANGE!
 overall_price_multiplier = 6
 volatile_price_multiplier = 2
 
@@ -313,15 +317,12 @@ def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name):
         raise PreventUpdate
     if not mturk:
         raise PreventUpdate
-    conn = sqlite3.connect('database_app1.db')
-    sql = '''INSERT INTO results VALUES(?,?,?,?,?,?)'''
-    conn.execute(sql, (app_name, mturk, x1, p1, x2, p2))
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    cursor = conn.cursor()
+    sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s)"
+    cur.execute(sql, (app_name, mturk, str(x1), str(p1), str(x2), str(p2)))
     conn.commit()
+    cur.close()
     conn.close()
     return("Thank you. You may now close this window.")
     
-def create_db():
-    conn = sqlite3.connect('database_app1.db')
-    conn.execute('CREATE TABLE results (exp_id TEXT, mturk_id TEXT, q1 TEXT, p1 TEXT, q2 TEXT, p2 TEXT)')
-    conn.commit()
-    conn.close()
