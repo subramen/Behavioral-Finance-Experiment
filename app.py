@@ -4,7 +4,7 @@ from dash.dependencies import Input, Output, State
 import common_utils as utils
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('app1', external_stylesheets=external_stylesheets)
+app = dash.Dash('app2', external_stylesheets=external_stylesheets)
 
 
 
