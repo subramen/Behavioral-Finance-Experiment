@@ -8,17 +8,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 
-WINDOW_SIZE = 500
-minutes_per_second = 6
-price_multiplier = 10
-
-end_P1 = 330//minutes_per_second
-end_P2 = 510//minutes_per_second
-
-df_start = 1000
-df_end = 1650
-
-MAX_LEN = df_end-df_start
 
 
 
@@ -47,6 +36,8 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         dcc.Store(id='txn-price-1', data=0),
         dcc.Store(id='txn-price-2', data=0),
         dcc.Store(id='data-end', data=False),
+        dcc.Store(id='bid_submitted1', data=False),
+        dcc.Store(id='bid_submitted2', data=False),
         
         dcc.Store(id='watercooler',data=False),
         
@@ -56,8 +47,8 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         html.Div(id='bottomrow', style={'width':'100%', 'overflow':'auto'}, children=[
                 html.Div(id='input-col', style={'float':'right', 'width':'40%', 'overflow':'auto'}, children=[
                     html.H3(id='ask-bid', children=' ', style={'color':'red'}),
-                    html.Div(id='bid_submitted1', style={'display': 'none'}, children='no'),
-                    html.Div(id='bid_submitted2', style={'display': 'none'}, children='no'),
+#                    html.Div(id='bid_submitted1', style={'display': 'none'}, children='no'),
+#                    html.Div(id='bid_submitted2', style={'display': 'none'}, children='no'),
                     html.Div(id='buy/sell', style={'float':'center', 'overflow':'auto'}, children=[
                          html.Div(dcc.Input(id="txn", type='number', placeholder='No. of Stocks', min=0), style={'float':'left'}),
                          dcc.RadioItems(id='buysell', options=[{'label':'BUY', 'value':1}, {'label':'SELL', 'value':-1}], value=1, style={'overflow':'auto'}),

@@ -12,35 +12,19 @@ import math
 from plotly import graph_objs as go
 
 
-# WATERCOOLER
-# @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
-def watercooler_break(interval, app_name):
-    global PRICE_DF
-    ix = interval*cfg.minutes_per_second
-    if app_name=="app2" and cfg.end_P1 < PRICE_DF.iloc[ix]['index2'] < cfg.end_P2:
-        return True
-    else:
-        return False
 
+WINDOW_SIZE = 500
+minutes_per_second = 6
+price_multiplier = 10
 
-# Returns screens in layout
-def get_screens():
-    return [cfg.screen1, cfg.screen2, cfg.screen3]
+end_P1 = 330//minutes_per_second
+end_P2 = 510//minutes_per_second
 
+df_start = 1000
+df_end = 1650
 
+MAX_LEN = df_end-df_start
 
-# Returns:Price dataset
-def get_df():
-    price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
-    price_df = price_df[price_df.Volume>0]
-    price_df=price_df.iloc[cfg.df_start:cfg.df_end]
-    price_df.index = range(len(price_df))
-    price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
-    price_df['index2'] = price_df.index//cfg.minutes_per_second
-    price_df['High']*=cfg.price_multiplier
-    return price_df
-
-PRICE_DF = get_df()
 
 
 # Returns:screen visibility flag
@@ -57,6 +41,47 @@ def start_exp(nclick1, dataend):
         return [d1,d2, d3]
     else:
         raise PreventUpdate
+
+
+
+
+
+
+
+
+
+# WATERCOOLER
+# @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
+def watercooler_break(interval, app_name):
+    global PRICE_DF
+    if app_name=="app2" and end_P1+3<interval<end_P2:
+        print("wc true")
+        return True
+    else:
+        return False
+
+
+# Returns screens in layout
+def get_screens():
+    return [cfg.screen1, cfg.screen2, cfg.screen3]
+
+
+
+# Returns:Price dataset
+def get_df():
+    price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
+    price_df = price_df[price_df.Volume>0]
+    price_df=price_df.iloc[df_start:df_end]
+    price_df.index = range(len(price_df))
+    price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
+    price_df['index2'] = price_df.index//minutes_per_second
+    price_df['High']*=price_multiplier
+    return price_df
+
+PRICE_DF = get_df()
+
+
+
         
         
         
@@ -68,10 +93,9 @@ def start_exp(nclick1, dataend):
 def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
     global PRICE_DF
     interval = interval or 0
-    ix = interval*cfg.minutes_per_second
-    if ix>cfg.MAX_LEN:
-        ix-=cfg.minutes_per_second
-#        dataend = True
+    ix = interval*minutes_per_second
+    if ix>MAX_LEN:
+        ix-=minutes_per_second
         return 0, 0, 0, 0, True
     df = PRICE_DF.iloc[ix]
     curr_price = round(float(df['High']), 2)
@@ -107,6 +131,55 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
 
 
 
+
+
+
+
+
+# PAUSE INTERVAL TO ASK FOR BID
+# Disable interval timer, Enable submit button, Prompt for bid
+#@app.callback([Output("interval-component", "disabled"), Output("submit", "disabled"),\
+#               Output("ask-bid", "children")], 
+#               [Input("interval-component", "n_intervals"), Input("bid_submitted1",'children'), \
+#                Input("bid_submitted2",'children'), Input('user-begin', 'n_clicks'), Input('data-end', 'data'), Input("watercooler","data")],
+#                [State("cash-store",'data'), State('today_price-store','data'), State('stock-store','data'),])
+def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
+    global PRICE_DF
+    interval = interval or 0
+    ix = interval*minutes_per_second
+    if ix>MAX_LEN:
+        return True, True, 'Thanks'
+    elif wc: 
+        return False, True, 'Trading paused due to high volume. Take a break to hydrate.'
+    elif begin_click:
+        if  PRICE_DF.iloc[ix]['index2'] == end_P1:#, end_P2]:
+            if not bid_submitted1: # PAUSE FOR BID SUBMIT
+                # Disable interval timer, Enable submit button, Prompt for bid
+                return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
+            else: # BID SUBMITTED. UNPAUSE
+                # Enable interval timer, Disable submit button, 
+                return False, True, 'Bid Accepted'
+        if PRICE_DF.iloc[ix]['index2'] == end_P2:
+            if not bid_submitted2: # PAUSE FOR BID SUBMIT
+                return True, False, f"Trading resumed, enter buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
+            else: # BID SUBMITTED. UNPAUSE
+                return False, True, 'Bid Accepted'
+        return False, True, 'Not accepting bids'
+    else:
+        raise PreventUpdate   
+
+
+
+
+
+
+
+
+
+
+
+
+
 # GET BID
 #@app.callback([Output("cash-store",'data'), Output('stock-store','data'), \
 #               Output('bid_submitted1','children'), Output('bid_submitted2','children'), \
@@ -121,41 +194,33 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
 #               State('bid_submitted2','children'), State('stock-qty-1','data'), State('stock-qty-2','data'),\
 #               State('txn-price-1','data'), State('txn-price-2','data')]
 #          )
-def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, interval, b1, b2, x1, x2, cp1, cp2):
+def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, interval, bidsubmitted1, bidsubmitted2, x1, x2, cp1, cp2):
     global PRICE_DF
-    print(interval, n_clicks)
-    if n_clicks is None:
-        # Wait for one click
-        raise PreventUpdate
-        
-    if not stock_qty:
-        # Empty input
+    if not stock_qty:     # Empty input
         raise PreventUpdate
     else:
-        # Value of input
-        val = stock_qty*today_price
-        # Buy value cannot be more than current cash. Don't update
-        if buysell==1 and val>curr_cash:
+        # VALIDATE INPUT
+        if buysell==1 and stock_qty*today_price>curr_cash:     # Buy value cannot be more than current cash. Don't update
             raise PreventUpdate
-        # Sell stocks cannot be more than current stock. Don't update
-        if buysell==-1 and stock_qty>curr_stock:
+        if buysell==-1 and stock_qty>curr_stock: # Sell stocks cannot be more than current stock. Don't update
             raise PreventUpdate
         else:
-            curr_cash = curr_cash - val*buysell
+            curr_cash = curr_cash - stock_qty*today_price*buysell
             curr_stock = curr_stock or 0
             curr_stock = curr_stock + stock_qty*buysell
        
-            if PRICE_DF.iloc[interval*cfg.minutes_per_second]['index2'] == cfg.end_P1:
-                b1 = 'yes'
-                x1 = stock_qty
-                cp1 = today_price
-            if PRICE_DF.iloc[interval*cfg.minutes_per_second]['index2'] == cfg.end_P2:
-                b2='yes'
+            # BID SUBMITTED TRUE
+            if interval == end_P1 and not bidsubmitted1:
+                bidsubmitted1 = True
+                x1 = stock_qty #Sql
+                cp1 = today_price #Sql
+            if interval == end_P2 and not bidsubmitted2:
+                bidsubmitted2 =True
                 x2 = stock_qty*buysell
                 cp2 = today_price if buysell>0 else cp1
-            return round(curr_cash,2), curr_stock, b1, b2, x1, x2, cp1, cp2
-        
-        
+            return round(curr_cash,2), curr_stock, bidsubmitted1, bidsubmitted2, x1, x2, cp1, cp2
+    
+    
 #@app.callback(
 #    Output("price-graph", "figure"), [Input("interval-component", "n_intervals"), Input("watercooler","data")]
 #)
@@ -164,13 +229,13 @@ def plot_prices(interval, wc):
     if wc:
         raise PreventUpdate
     
-    ix = interval*cfg.minutes_per_second
-#    pre = max(0, ix-cfg.WINDOW_SIZE)
+    ix = interval*minutes_per_second
+#    pre = max(0, ix-WINDOW_SIZE)
     pre = 0
     df = PRICE_DF[['strtime', 'High', 'Low']].iloc[pre:ix]
     # pad empty data points 
     null_df = pd.DataFrame(columns=['strtime','High','Low'])
-    null_df['strtime'] = PRICE_DF['strtime'].iloc[ix:ix+3*(cfg.end_P2-cfg.end_P1)]
+    null_df['strtime'] = PRICE_DF['strtime'].iloc[ix:ix+3*(end_P2-end_P1)]
     
     df = pd.concat([df,null_df])
 
@@ -184,11 +249,11 @@ def plot_prices(interval, wc):
         line = dict(color = '#17BECF'),
         opacity = 0.8)
         
-#    line_x0=cfg.end_P1*cfg.minutes_per_second
+#    line_x0=end_P1*minutes_per_second
     trace_vline_list=[]
     
-    if ix==cfg.end_P1*cfg.minutes_per_second:
-        row = PRICE_DF.iloc[ix]
+    if interval>=end_P1:
+        row = PRICE_DF.iloc[end_P1*minutes_per_second]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
@@ -231,40 +296,6 @@ def plot_prices(interval, wc):
     fig['layout']['shapes'] = trace_vline_list
     
     return fig
-
-
-
-# PAUSE INTERVAL TO ASK FOR BID
-# Disable interval timer, Enable submit button, Prompt for bid
-#@app.callback([Output("interval-component", "disabled"), Output("submit", "disabled"),\
-#               Output("ask-bid", "children")], 
-#               [Input("interval-component", "n_intervals"), Input("bid_submitted1",'children'), \
-#                Input("bid_submitted2",'children'), Input('user-begin', 'n_clicks'), Input('data-end', 'data'), Input("watercooler","data")],
-#                [State("cash-store",'data'), State('today_price-store','data'), State('stock-store','data'),])
-def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
-    global PRICE_DF
-    interval = interval or 0
-    ix = interval*cfg.minutes_per_second
-    if ix>cfg.MAX_LEN:
-        return True, True, 'Thanks'
-    elif wc:
-        return False, True, 'Trading paused due to high volume.'
-    elif begin_click:
-        if PRICE_DF.iloc[ix]['index2'] == cfg.end_P1:#, end_P2]:
-            if bid_submitted1=='no': # PAUSE
-                # Disable interval timer, Enable submit button, Prompt for bid
-                return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
-            else: #UNPAUSE
-                # Enable interval timer, Disable submit button, 
-                return False, True, 'Bid Accepted'
-        if PRICE_DF.iloc[ix]['index2'] == cfg.end_P2:
-            if bid_submitted2=='no': # PAUSE
-                return True, False, f"Enter number of stocks to buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
-            else: #UNPAUSE
-                return False, True, 'Bid Accepted'
-        return False, True, 'Not accepting bids'
-    else:
-        raise PreventUpdate   
 
 
 
