@@ -31,15 +31,15 @@ def start_exp(nclick1, dataend):
                Output('position-store','data'), Output('p&l-store','data'), Output('data-end', 'data')], 
               [Input("interval-component", "n_intervals")], \
               [State('stock-store','data'), State('stock-qty-1','data'), \
-               State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data')])
-def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
-    return utils.update_currents(interval, stock, x1, x2, cp1, cp2, dataend)
+               State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data'), State("cash-store",'data')])
+def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
+    return utils.update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash)
 
 
 # UPDATE DISPLAY STR
 @app.callback([Output("today_price-str", "children"), Output("today-str","children"), \
                Output('cash-str','children'), Output('stock-str','children'), \
-               Output('position-str','children'), Output('p&l-str','children'), Output('p&l-str','style')], 
+               Output('position-str','children'), Output('p&l-str','children'), Output('p&l-str','style'), Output('position-str', 'style')], 
               [Input("today_price-store", "data"), Input("today_dt-store","data"), Input("watercooler","data")],
               [State("cash-store",'data'), State('stock-store','data'), \
                State('position-store','data'), State('p&l-store','data')])

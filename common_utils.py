@@ -101,7 +101,7 @@ PRICE_DF = get_df()
 #              [Input("interval-component", "n_intervals")], \
 #              [State('stock-store','data'), State('stock-qty-1','data'), \
 #               State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data')])
-def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
+def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
     global PRICE_DF
     interval = interval or 0
     ix = interval*minutes_per_interval
@@ -112,7 +112,7 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
     curr_price = round(float(df['High']), 2)
     curr_dt = df['strtime']
     stock = stock or 0
-    curr_pos = round(stock*curr_price, 2)
+    curr_pos = round(stock*curr_price+cash, 2)
     cp1 = cp1 or 0
     cp2 = cp2 or 0
     x1 = x1 or 0
@@ -125,7 +125,7 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
 # UPDATE DISPLAY STR
 #@app.callback([Output("today_price-str", "children"), Output("today-str","children"), \
 #               Output('cash-str','children'), Output('stock-str','children'), \
-#               Output('position-str','children'), Output('p&l-str','children'), Output('p&l-str','style')], 
+#               Output('position-str','children'), Output('p&l-str','children'), Output('p&l-str','style'), Output('position-str', 'style')], 
 #              [Input("today_price-store", "data"), Input("today_dt-store","data"), Input("watercooler","data")],
 #              [State("cash-store",'data'), State('stock-store','data'), \
 #               State('position-store','data'), State('p&l-store','data')])
@@ -133,12 +133,10 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
     if wc:
         raise PreventUpdate
     pnl = pnl or 0
-    style_dict = {'display':'block'}
-    if pnl<0:
-        style_dict={'display':'block', 'color':'red'}
-    if pnl>0:
-        style_dict={'display':'block', 'color':'green'}
-    return f"Current Price: ${price}", f"{date}", f"${cash}", f"{stock}", f"${pos}", f"Net P&L: ${pnl}", style_dict
+    pos = pos or 0
+    pnlstyle_dict = {'display':'block', 'color':'red'} if pnl<0 else {'display':'block', 'color':'green'}
+    posstyle_dict = {'display':'block', 'color':'red'} if pos<cfg.status0['cash'] else {'display':'block', 'color':'green'}
+    return f"Current Price: ${price}", f"{date}", f"${cash}", f"{stock}", f"${pos}", f"Unrealized P&L: ${pnl}", pnlstyle_dict, posstyle_dict
 
 
 

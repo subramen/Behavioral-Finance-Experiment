@@ -8,7 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 
-INTERVAL_LENGTH = 3000
+INTERVAL_LENGTH = 1500
 
 
 
@@ -72,7 +72,7 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
                     html.Table([
                             html.Tr([html.Th(style={'display':'block'}, children=['Available Cash']), \
                                      html.Th(style={'display':'block'}, children=['Stocks Held']), \
-                                     html.Th(style={'display':'block'}, children=['Holdings Value']), \
+                                     html.Th(style={'display':'block'}, children=['Net Worth']), \
                                      html.Th(style={'display':'block'}, children=['Today is'])],
                                  style={'float':'left', 'display':'block'}),
                                      
