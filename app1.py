@@ -87,6 +87,12 @@ def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, 
 def plot_prices(interval, wc):
     return utils.plot_prices(interval, wc)
 
+
+@app.callback(Output("interval-component", "interval"), [Input("bid_submitted2",'data') ])
+def fast_forward_end(bid_submitted2):
+    return utils.fast_forward_end(bid_submitted2)
+
+
 # CONCLUDE
 @app.callback(Output('ty', 'children'),
               [Input('exp-end', 'n_clicks')],

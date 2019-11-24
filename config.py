@@ -13,11 +13,20 @@ INTERVAL_LENGTH = 3000
 
 
 
-status0 = {'cash':40000, 'stock':0, 'position':0} #defaults
+status0 = {'cash':1000, 'stock':0, 'position':0} #defaults
 app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"}             
 
-screen1 = html.Div(id='screen1', style={'display':'block', 'float':'center'},\
-                   children=[html.H3('To start, click Begin'), html.Br(), html.Button('Begin', id='user-begin')])
+screen1 = html.Div(id='screen1', style={'text-align':'center'},\
+                   children=[html.H1('Welcome!'), \
+                   html.Br(),html.Br(),\
+                   html.H4("In this task, you have $1,000 to invest in a large tech company."), 
+                   html.H4("Use the first five minutes to track the stock's movements."),\
+                   html.Br(),
+                   html.H4("You will get two chances to trade on the market."),\
+                   html.H4("Top 3 winners are eligible for Amazon gift cards worth their winnings. Play smart!", style={'color':'RoyalBlue'}),\
+                   html.Br(),html.Br(),html.Br(),\
+                   html.H6('To start, click Begin', style={'display':'inline-block'}), html.Br(), \
+                   html.Button('Begin', id='user-begin', style={'display':'inline-block'})])
 
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         # TITLE
@@ -45,7 +54,7 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         
         # LAYOUT
         html.Div(id='toprow', style={'width':'100%', 'overflow':'auto'}, children=[html.Div(dcc.Graph(id="price-graph"))]),
-        html.Br(),
+        # html.Br(),
         html.Div(id='bottomrow', style={'width':'100%', 'overflow':'auto'}, children=[
                 html.Div(id='input-col', style={'float':'right', 'width':'40%', 'overflow':'auto'}, children=[
                     html.H3(id='ask-bid', children=' ', style={'color':'red'}),

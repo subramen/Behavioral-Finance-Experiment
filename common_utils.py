@@ -15,7 +15,7 @@ from plotly import graph_objs as go
 
 WINDOW_SIZE = 500
 minutes_per_interval = 3
-overall_price_multiplier = 10
+overall_price_multiplier = 6
 volatile_price_multiplier = 2
 
 end_P1 = 330//minutes_per_interval
@@ -68,6 +68,11 @@ def get_screens():
 
 
 
+def dist_stretcher(series, multiplier):
+    meann = series.mean()
+    return multiplier*(series-meann) + meann # X <- vpm*(x-mean) + mean
+
+
 # Returns:Price dataset
 def get_df():
     price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
@@ -77,11 +82,11 @@ def get_df():
     price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
     price_df['index2'] = price_df.index//minutes_per_interval
     
-    y_P1_P2 = price_df.loc[end_P1*minutes_per_interval:end_P2*minutes_per_interval]['High']
-    anchor_P1_P2= y_P1_P2.mean()
-    price_df.loc[end_P1*minutes_per_interval:end_P2*minutes_per_interval]['High'] = volatile_price_multiplier*(y_P1_P2 - anchor_P1_P2) + anchor_P1_P2 # X <- vpm*(x-mean) + mean
+    ix_p1 = end_P1*minutes_per_interval
+    ix_p2 = end_P2*minutes_per_interval
+    price_df.loc[ix_p1:ix_p2]['High'] = dist_stretcher(price_df.loc[ix_p1:ix_p2]['High'].copy(), volatile_price_multiplier)
     
-    price_df['High']*= overall_price_multiplier
+    price_df['High']= dist_stretcher(price_df['High'].copy(), overall_price_multiplier)
     return price_df
 
 PRICE_DF = get_df()
@@ -170,17 +175,18 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_clic
                 return True, False, f"Trading resumed, enter buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
             else: # BID SUBMITTED. UNPAUSE
                 return False, True, 'Bid Accepted'
-        return False, True, 'Not accepting bids'
+        return False, True, 'Not accepting bids. Please study the market carefully.'
     else:
         raise PreventUpdate   
 
 
 
 
-
-
-
-
+def fast_forward_end(bid_submitted2):
+    if bid_submitted2:
+      return 1500
+    else:
+      raise PreventUpdate
 
 
 
@@ -264,9 +270,9 @@ def plot_prices(interval, wc):
                 type="line",
                 x0=row['strtime'],
                 x1=row['strtime'],
-                y0=row['High']-10,
-                y1=row['High']+10,
-                line=dict(color='Red', width=10, dash='dot')))
+                y0=row['High']-5,
+                y1=row['High']+5,
+                line=dict(color='Red', width=3, dash='dot')))
     #    
 #    trace_low = go.Scatter(
 #        x=df['strtime'],
@@ -302,11 +308,6 @@ def plot_prices(interval, wc):
     fig['layout']['shapes'] = trace_vline_list
     
     return fig
-
-
-
-
-
 
 
 def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name):
