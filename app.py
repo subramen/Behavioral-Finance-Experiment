@@ -6,7 +6,8 @@ import flask
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('app1', external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
 
 
 
@@ -17,7 +18,7 @@ app.layout = html.Div(utils.get_screens())
 # WATERCOOLER
 @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
 def watercooler_break(interval):
-    return utils.watercooler_break(interval, app.config['name'])
+    return utils.watercooler_break(interval, "app1")
 
 
 # SCREEN CONTROL
