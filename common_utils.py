@@ -12,8 +12,8 @@ import math
 from plotly import graph_objs as go
 
 import os
-import psycopg2
-DATABASE_URL = os.environ['DATABASE_URL']
+# import psycopg2
+# DATABASE_URL = os.environ['DATABASE_URL'] 
 
 
 
@@ -60,15 +60,9 @@ def start_exp(nclick1, dataend):
 def watercooler_break(interval, app_name):
     global PRICE_DF
     if app_name=="app2" and end_P1+3<interval<end_P2:
-        print("wc true")
         return True
     else:
         return False
-
-
-# Returns screens in layout
-def get_screens():
-    return [cfg.screen1, cfg.screen2, cfg.screen3]
 
 
 
@@ -109,10 +103,12 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
     global PRICE_DF
     interval = interval or 0
     ix = interval*minutes_per_interval
+    df=None
     if ix>MAX_LEN:
-        ix-=minutes_per_interval
-        return 0, 0, 0, 0, True
-    df = PRICE_DF.iloc[ix]
+        dataend=True
+        df = PRICE_DF.tail(1)
+    else:
+        df = PRICE_DF.iloc[ix]
     curr_price = round(float(df['High']), 2)
     curr_dt = df['strtime']
     stock = stock or 0
@@ -312,17 +308,34 @@ def plot_prices(interval, wc):
     return fig
 
 
-def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name):
+def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name, curr_pos):
     if exp_end is None:
         raise PreventUpdate
     if not mturk:
         raise PreventUpdate
+    
+    win_str=""
+    win_style = {'text-align':'center'}
+    netwin=round(curr_pos-cfg.status0['cash'],2)
+    if netwin>0:
+        win_str = f"You made a profit of ${netwin}. If you are a selected winner, we will be in touch."
+        win_style['color']='Green'
+    else:
+        win_str = f"You made a loss of ${netwin}. If you are a selected winner, we will be in touch."
+        win_style['color'] = 'Red'
+    
+    persist_to_sql(x1, x2, p1, p2, mturk, app_name, netwin)
+
+    return(win_str, "Thank you. You may now close this window.", win_style)
+    
+
+def persist_to_sql(x1, x2, p1, p2, mturk, app_name, netwin):
+    # CREATE TABLE results (exp_id TEXT, mturk_id TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, winnings NUMERIC)
+
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cursor = conn.cursor()
+    cur = conn.cursor()
     sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s)"
-    cur.execute(sql, (app_name, mturk, str(x1), str(p1), str(x2), str(p2)))
+    cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin))
     conn.commit()
     cur.close()
     conn.close()
-    return("Thank you. You may now close this window.")
-    

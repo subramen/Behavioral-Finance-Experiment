@@ -31,7 +31,7 @@ screen1 = html.Div(id='screen1', style={'text-align':'center'},\
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         # TITLE
         html.H3(children='Stock Market'),
-        html.P("Hover mouse over graph to know more. Click and drag to zoom in. Double-click to zoom out"),
+        html.P("Click and drag to zoom in. Double-click to zoom out"),
         
         # INTERNAL VARIABLES
         dcc.Interval(id='interval-component',interval=INTERVAL_LENGTH, n_intervals=0, disabled=True),
@@ -62,7 +62,7 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
 #                    html.Div(id='bid_submitted2', style={'display': 'none'}, children='no'),
                     html.Div(id='buy/sell', style={'float':'center', 'overflow':'auto'}, children=[
                          html.Div(dcc.Input(id="txn", type='number', placeholder='No. of Stocks', min=0), style={'float':'left'}),
-                         dcc.RadioItems(id='buysell', options=[{'label':'BUY', 'value':1}, {'label':'SELL', 'value':-1}], value=1, style={'overflow':'auto'}),
+                         dcc.RadioItems(id='buysell', options=[{'label':'BUY', 'value':1}, {'label':'SELL', 'value':-1}], style={'overflow':'auto'}),
                          html.Br(),
                          html.Button('Submit', id='submit', hidden=True),
                          html.Div(id='buy-sell-status'),
@@ -88,13 +88,15 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
                         html.H4(id='today_price-str', children="Current Price: $200"),
                         ])])])
                             
-screen3 = html.Div(id='screen3', style={'display':'none', 'float':'center'},children=[html.H3('Enter your MTurk Worker ID to receive compensation'), \
+screen3 = html.Div(id='screen3', style={'display':'none', 'float':'center'},children=[
+                   html.H3('Enter your MTurk Worker ID to receive compensation for this task.'), \
                    html.Br(),\
-                   dcc.Input(id='mturk-id', placeholder='Mturk Worker ID'), html.Button('End Task', id='exp-end'), html.H2(id='ty')])
+                   dcc.Input(id='mturk-id', placeholder='Mturk Worker ID'), html.Button('End Task', id='exp-end'), html.Br(), html.Br(),\
+                   html.H3(id='winnings'), html.Br(), html.H4(id='ty', style={'text-align':'center'})])
                             
 
 
-
+app_layout = html.Div([screen1, screen2, screen3])
 
 
 

@@ -3,6 +3,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import common_utils as utils
 import flask
+import config
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -11,7 +12,7 @@ server = app.server
 
 
 
-app.layout = html.Div(utils.get_screens())
+app.layout = config.app_layout
 
 
 
@@ -23,7 +24,8 @@ def watercooler_break(interval):
 
 # SCREEN CONTROL
 @app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')], \
-               [Input('user-begin', 'n_clicks'), Input('data-end', 'data')])
+               [Input('user-begin', 'n_clicks'), Input('data-end', 'data')],
+               [State('mturk-id','value')])
 def start_exp(nclick1, dataend):
     return utils.start_exp(nclick1, dataend)
 
@@ -97,12 +99,12 @@ def fast_forward_end(bid_submitted2):
 
 
 # CONCLUDE
-@app.callback(Output('ty', 'children'),
-              [Input('exp-end', 'n_clicks')],
+@app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style')],
+              [Input('mturk-submit', 'n_clicks')],
               [State('stock-qty-1','data'), State('stock-qty-2','data'),\
-               State('txn-price-1','data'), State('txn-price-2','data'), State('mturk-id','value')])
-def end_experiment(exp_end, x1, x2, p1, p2, mturk):
-    return utils.end_experiment(exp_end, x1, x2, p1, p2, mturk, app.config['name'])
+               State('txn-price-1','data'), State('txn-price-2','data'), State('mturk-id','value'), State('position-store','data'),])
+def end_experiment(exp_end, x1, x2, p1, p2, mturk, curr_pos):
+    return utils.end_experiment(exp_end, x1, x2, p1, p2, mturk, "app1", curr_pos)
     
     
 if __name__ == "__main__":
