@@ -1,0 +1,291 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Nov 23 14:03:42 2019
+
+@author: suraj
+"""
+import config as cfg
+import pandas as pd
+import sqlite3
+from dash.exceptions import PreventUpdate
+import math
+from plotly import graph_objs as go
+
+
+# WATERCOOLER
+# @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
+def watercooler_break(interval, app_name):
+    global PRICE_DF
+    ix = interval*cfg.minutes_per_second
+    if app_name=="app2" and cfg.end_P1 < PRICE_DF.iloc[ix]['index2'] < cfg.end_P2:
+        return True
+    else:
+        return False
+
+
+# Returns screens in layout
+def get_screens():
+    return [cfg.screen1, cfg.screen2, cfg.screen3]
+
+
+
+# Returns:Price dataset
+def get_df():
+    price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
+    price_df = price_df[price_df.Volume>0]
+    price_df=price_df.iloc[cfg.df_start:cfg.df_end]
+    price_df.index = range(len(price_df))
+    price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
+    price_df['index2'] = price_df.index//cfg.minutes_per_second
+    price_df['High']*=cfg.price_multiplier
+    return price_df
+
+PRICE_DF = get_df()
+
+
+# Returns:screen visibility flag
+def start_exp(nclick1, dataend):
+    if dataend:
+        d1 = {'display':'none'}
+        d2 = {'display':'none'}
+        d3 = {'display':'block'}
+        return [d1,d2,d3]
+    elif nclick1:
+        d1 = {'display':'none', 'float':'center'}
+        d2 = {'display':'block'}
+        d3 = {'display':'none'}
+        return [d1,d2, d3]
+    else:
+        raise PreventUpdate
+        
+        
+        
+#@app.callback([Output("today_price-store", "data"), Output("today_dt-store","data"), \
+#               Output('position-store','data'), Output('p&l-store','data'), Output('data-end', 'data')], 
+#              [Input("interval-component", "n_intervals")], \
+#              [State('stock-store','data'), State('stock-qty-1','data'), \
+#               State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data')])
+def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
+    global PRICE_DF
+    interval = interval or 0
+    ix = interval*cfg.minutes_per_second
+    if ix>cfg.MAX_LEN:
+        ix-=cfg.minutes_per_second
+#        dataend = True
+        return 0, 0, 0, 0, True
+    df = PRICE_DF.iloc[ix]
+    curr_price = round(float(df['High']), 2)
+    curr_dt = df['strtime']
+    stock = stock or 0
+    curr_pos = round(stock*curr_price, 2)
+    cp1 = cp1 or 0
+    cp2 = cp2 or 0
+    x1 = x1 or 0
+    x2 = x2 or 0
+    curr_pnl = round((curr_price-cp1)*x1+(curr_price-cp2)*x2, 2)
+    return curr_price, curr_dt, curr_pos, curr_pnl, dataend
+
+
+
+# UPDATE DISPLAY STR
+#@app.callback([Output("today_price-str", "children"), Output("today-str","children"), \
+#               Output('cash-str','children'), Output('stock-str','children'), \
+#               Output('position-str','children'), Output('p&l-str','children'), Output('p&l-str','style')], 
+#              [Input("today_price-store", "data"), Input("today_dt-store","data"), Input("watercooler","data")],
+#              [State("cash-store",'data'), State('stock-store','data'), \
+#               State('position-store','data'), State('p&l-store','data')])
+def update_today_str(price, date, wc, cash, stock, pos, pnl):
+    if wc:
+        raise PreventUpdate
+    pnl = pnl or 0
+    style_dict = {'display':'block'}
+    if pnl<0:
+        style_dict={'display':'block', 'color':'red'}
+    if pnl>0:
+        style_dict={'display':'block', 'color':'green'}
+    return f"Current Price: ${price}", f"{date}", f"${cash}", f"{stock}", f"${pos}", f"Net P&L: ${pnl}", style_dict
+
+
+
+# GET BID
+#@app.callback([Output("cash-store",'data'), Output('stock-store','data'), \
+#               Output('bid_submitted1','children'), Output('bid_submitted2','children'), \
+#               Output('stock-qty-1','data'), Output('stock-qty-2','data'),\
+#               Output('txn-price-1','data'), Output('txn-price-2','data')], 
+#    
+#              [Input("submit",'n_clicks')],
+#    
+#              [State('txn','value'), State('buysell','value'), State("cash-store",'data'), \
+#               State('stock-store','data'), State('today_price-store','data'), \
+#               State("interval-component", "n_intervals"), State('bid_submitted1','children'), \
+#               State('bid_submitted2','children'), State('stock-qty-1','data'), State('stock-qty-2','data'),\
+#               State('txn-price-1','data'), State('txn-price-2','data')]
+#          )
+def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, interval, b1, b2, x1, x2, cp1, cp2):
+    global PRICE_DF
+    print(interval, n_clicks)
+    if n_clicks is None:
+        # Wait for one click
+        raise PreventUpdate
+        
+    if not stock_qty:
+        # Empty input
+        raise PreventUpdate
+    else:
+        # Value of input
+        val = stock_qty*today_price
+        # Buy value cannot be more than current cash. Don't update
+        if buysell==1 and val>curr_cash:
+            raise PreventUpdate
+        # Sell stocks cannot be more than current stock. Don't update
+        if buysell==-1 and stock_qty>curr_stock:
+            raise PreventUpdate
+        else:
+            curr_cash = curr_cash - val*buysell
+            curr_stock = curr_stock or 0
+            curr_stock = curr_stock + stock_qty*buysell
+       
+            if PRICE_DF.iloc[interval*cfg.minutes_per_second]['index2'] == cfg.end_P1:
+                b1 = 'yes'
+                x1 = stock_qty
+                cp1 = today_price
+            if PRICE_DF.iloc[interval*cfg.minutes_per_second]['index2'] == cfg.end_P2:
+                b2='yes'
+                x2 = stock_qty*buysell
+                cp2 = today_price if buysell>0 else cp1
+            return round(curr_cash,2), curr_stock, b1, b2, x1, x2, cp1, cp2
+        
+        
+#@app.callback(
+#    Output("price-graph", "figure"), [Input("interval-component", "n_intervals"), Input("watercooler","data")]
+#)
+def plot_prices(interval, wc):
+    global PRICE_DF
+    if wc:
+        raise PreventUpdate
+    
+    ix = interval*cfg.minutes_per_second
+#    pre = max(0, ix-cfg.WINDOW_SIZE)
+    pre = 0
+    df = PRICE_DF[['strtime', 'High', 'Low']].iloc[pre:ix]
+    # pad empty data points 
+    null_df = pd.DataFrame(columns=['strtime','High','Low'])
+    null_df['strtime'] = PRICE_DF['strtime'].iloc[ix:ix+3*(cfg.end_P2-cfg.end_P1)]
+    
+    df = pd.concat([df,null_df])
+
+        
+    fig={'data':[], 'layout':{}}
+    
+    trace_high = go.Scatter(
+        x=df['strtime'],
+        y=df['High'],
+        name = "Stock High",
+        line = dict(color = '#17BECF'),
+        opacity = 0.8)
+        
+#    line_x0=cfg.end_P1*cfg.minutes_per_second
+    trace_vline_list=[]
+    
+    if ix==cfg.end_P1*cfg.minutes_per_second:
+        row = PRICE_DF.iloc[ix]
+        trace_vline_list.append(go.layout.Shape(
+                type="line",
+                x0=row['strtime'],
+                x1=row['strtime'],
+                y0=row['High']-10,
+                y1=row['High']+10,
+                line=dict(color='Red', width=10, dash='dot')))
+    #    
+#    trace_low = go.Scatter(
+#        x=df['strtime'],
+#        y=df['Low'],
+#        name = "Stock Low",
+#        line = dict(color = '#7F7F7F'),
+#        opacity = 0.8)
+    
+#    fig['data'] = [trace_high,trace_low]
+    fig['data'] = [trace_high]
+    
+    
+    fig["layout"]["uirevision"] = "The User is always right"  # Ensures zoom on graph is the same on update
+    fig["layout"]["margin"] = {"t": 10, "l": 50, "b": 40, "r": 25}
+    fig["layout"]["autosize"] = True
+#    fig["layout"]["height"] = 450
+#    fig["layout"]["width"] = 800
+    fig['layout']['xaxis'] = dict()
+#    fig["layout"]["xaxis"]["tickformat"] = "%d %b %H:%M"
+    fig["layout"]["xaxis"]["type"] = "category"
+    fig["layout"]["xaxis"]["showticklabels"]=False
+    fig["layout"]["xaxis"]["ticks"]="inside"
+    fig["layout"]["xaxis"]["tickangle"]=45
+    fig["layout"]["xaxis"]["dtick"]=6
+    fig["layout"]["xaxis"]["tickfont"]={'size':10}
+    fig["layout"]["yaxis"] = dict()
+    fig["layout"]["yaxis"]["showgrid"] = True
+    fig["layout"]["yaxis"]["gridcolor"] = "#3E3F40"
+    fig["layout"]["yaxis"]["gridwidth"] = 1
+    fig["layout"]['paper_bgcolor'] = cfg.app_color["graph_bg"]
+    fig["layout"]['plot_bgcolor'] =cfg.app_color["graph_bg"]
+    fig["layout"]['font'] = {"color": "#fff"}
+    fig['layout']['shapes'] = trace_vline_list
+    
+    return fig
+
+
+
+# PAUSE INTERVAL TO ASK FOR BID
+# Disable interval timer, Enable submit button, Prompt for bid
+#@app.callback([Output("interval-component", "disabled"), Output("submit", "disabled"),\
+#               Output("ask-bid", "children")], 
+#               [Input("interval-component", "n_intervals"), Input("bid_submitted1",'children'), \
+#                Input("bid_submitted2",'children'), Input('user-begin', 'n_clicks'), Input('data-end', 'data'), Input("watercooler","data")],
+#                [State("cash-store",'data'), State('today_price-store','data'), State('stock-store','data'),])
+def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
+    global PRICE_DF
+    interval = interval or 0
+    ix = interval*cfg.minutes_per_second
+    if ix>cfg.MAX_LEN:
+        return True, True, 'Thanks'
+    elif wc:
+        return False, True, 'Trading paused due to high volume.'
+    elif begin_click:
+        if PRICE_DF.iloc[ix]['index2'] == cfg.end_P1:#, end_P2]:
+            if bid_submitted1=='no': # PAUSE
+                # Disable interval timer, Enable submit button, Prompt for bid
+                return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
+            else: #UNPAUSE
+                # Enable interval timer, Disable submit button, 
+                return False, True, 'Bid Accepted'
+        if PRICE_DF.iloc[ix]['index2'] == cfg.end_P2:
+            if bid_submitted2=='no': # PAUSE
+                return True, False, f"Enter number of stocks to buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
+            else: #UNPAUSE
+                return False, True, 'Bid Accepted'
+        return False, True, 'Not accepting bids'
+    else:
+        raise PreventUpdate   
+
+
+
+
+
+
+
+def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name):
+    if exp_end is None:
+        raise PreventUpdate
+    if not mturk:
+        raise PreventUpdate
+    conn = sqlite3.connect('database_app1.db')
+    sql = '''INSERT INTO results VALUES(?,?,?,?,?,?)'''
+    conn.execute(sql, (app_name, mturk, x1, p1, x2, p2))
+    conn.commit()
+    conn.close()
+    return("Thank you. You may now close this window.")
+    
+def create_db():
+    conn = sqlite3.connect('database_app1.db')
+    conn.execute('CREATE TABLE results (exp_id TEXT, mturk_id TEXT, q1 TEXT, p1 TEXT, q2 TEXT, p2 TEXT)')
+    conn.commit()
+    conn.close()
