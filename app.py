@@ -2,9 +2,12 @@ import dash
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import common_utils as utils
+import flask
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('app1', external_stylesheets=external_stylesheets)
+server = flask.Flask(__name__) # define flask app.server
+app = dash.Dash('app1', external_stylesheets=external_stylesheets, server=server)
 
 
 
