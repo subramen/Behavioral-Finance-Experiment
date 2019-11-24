@@ -8,6 +8,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 
+INTERVAL_LENGTH = 3000
+
 
 
 
@@ -23,7 +25,7 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         html.P("Hover mouse over graph to know more. Click and drag to zoom in. Double-click to zoom out"),
         
         # INTERNAL VARIABLES
-        dcc.Interval(id='interval-component',interval=1000, n_intervals=0, disabled=True),
+        dcc.Interval(id='interval-component',interval=INTERVAL_LENGTH, n_intervals=0, disabled=True),
         dcc.Store(id='today_price-store', data=200),
         dcc.Store(id='cash-store', data=status0['cash']),
         dcc.Store(id='stock-store', data=status0['stock']),

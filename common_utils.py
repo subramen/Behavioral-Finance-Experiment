@@ -14,11 +14,12 @@ from plotly import graph_objs as go
 
 
 WINDOW_SIZE = 500
-minutes_per_second = 6
-price_multiplier = 10
+minutes_per_interval = 3
+overall_price_multiplier = 10
+volatile_price_multiplier = 2
 
-end_P1 = 330//minutes_per_second
-end_P2 = 510//minutes_per_second
+end_P1 = 330//minutes_per_interval
+end_P2 = 510//minutes_per_interval
 
 df_start = 1000
 df_end = 1650
@@ -74,8 +75,13 @@ def get_df():
     price_df=price_df.iloc[df_start:df_end]
     price_df.index = range(len(price_df))
     price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
-    price_df['index2'] = price_df.index//minutes_per_second
-    price_df['High']*=price_multiplier
+    price_df['index2'] = price_df.index//minutes_per_interval
+    
+    y_P1_P2 = price_df.loc[end_P1*minutes_per_interval:end_P2*minutes_per_interval]['High']
+    anchor_P1_P2= y_P1_P2.mean()
+    price_df.loc[end_P1*minutes_per_interval:end_P2*minutes_per_interval]['High'] = volatile_price_multiplier*(y_P1_P2 - anchor_P1_P2) + anchor_P1_P2 # X <- vpm*(x-mean) + mean
+    
+    price_df['High']*= overall_price_multiplier
     return price_df
 
 PRICE_DF = get_df()
@@ -93,9 +99,9 @@ PRICE_DF = get_df()
 def update_currents(interval, stock, x1, x2, cp1, cp2, dataend):
     global PRICE_DF
     interval = interval or 0
-    ix = interval*minutes_per_second
+    ix = interval*minutes_per_interval
     if ix>MAX_LEN:
-        ix-=minutes_per_second
+        ix-=minutes_per_interval
         return 0, 0, 0, 0, True
     df = PRICE_DF.iloc[ix]
     curr_price = round(float(df['High']), 2)
@@ -146,7 +152,7 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
 def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
     global PRICE_DF
     interval = interval or 0
-    ix = interval*minutes_per_second
+    ix = interval*minutes_per_interval
     if ix>MAX_LEN:
         return True, True, 'Thanks'
     elif wc: 
@@ -229,7 +235,7 @@ def plot_prices(interval, wc):
     if wc:
         raise PreventUpdate
     
-    ix = interval*minutes_per_second
+    ix = interval*minutes_per_interval
 #    pre = max(0, ix-WINDOW_SIZE)
     pre = 0
     df = PRICE_DF[['strtime', 'High', 'Low']].iloc[pre:ix]
@@ -249,11 +255,11 @@ def plot_prices(interval, wc):
         line = dict(color = '#17BECF'),
         opacity = 0.8)
         
-#    line_x0=end_P1*minutes_per_second
+#    line_x0=end_P1*minutes_per_interval
     trace_vline_list=[]
     
     if interval>=end_P1:
-        row = PRICE_DF.iloc[end_P1*minutes_per_second]
+        row = PRICE_DF.iloc[end_P1*minutes_per_interval]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
