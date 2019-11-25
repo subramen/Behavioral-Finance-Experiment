@@ -128,16 +128,17 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
 #              [Input("today_price-store", "data"), Input("today_dt-store","data"), Input("watercooler","data")],
 #              [State("cash-store",'data'), State('stock-store','data'), \
 #               State('position-store','data'), State('p&l-store','data')])
-def update_today_str(price, date, wc, cash, stock, pos, pnl):
+def update_str(price, date, wc, cash, stock, pos, pnl):
     if wc:
         raise PreventUpdate
     pnl = pnl or 0
     pos = pos or 0
     pnlstyle_dict = {'display':'block', 'color':'red'} if pnl<0 else {'display':'block', 'color':'green'}
     posstyle_dict = {'display':'block', 'color':'red'} if pos<cfg.status0['cash'] else {'display':'block', 'color':'green'}
-    return f"Current Price: ${price}", f"{date}", f"${cash}", f"{stock}", f"${pos}", f"Unrealized P&L: ${pnl}", pnlstyle_dict, posstyle_dict
+    return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Unrealized P&L: ${pnl}", pnlstyle_dict, posstyle_dict
 
-
+def update_today_str(date):
+    return f"{date}"
 
 
 

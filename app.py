@@ -43,15 +43,18 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
 
 
 # UPDATE DISPLAY STR
-@app.callback([Output("today_price-str", "children"), Output("today-str","children"), \
-               Output('cash-str','children'), Output('stock-str','children'), \
+@app.callback([Output("today_price-str", "children"), Output('cash-str','children'), Output('stock-str','children'), \
                Output('position-str','children'), Output('p&l-str','children'), Output('p&l-str','style'), Output('position-str', 'style')], 
               [Input("today_price-store", "data"), Input("today_dt-store","data"), Input("watercooler","data")],
               [State("cash-store",'data'), State('stock-store','data'), \
                State('position-store','data'), State('p&l-store','data')])
-def update_today_str(price, date, wc, cash, stock, pos, pnl):
-    return utils.update_today_str(price, date, wc, cash, stock, pos, pnl)
+def update_str(price,date, wc, cash, stock, pos, pnl):
+    return utils.update_str(price, date, wc, cash, stock, pos, pnl)
 
+
+@app.callback(Output("today-str", "children"), [Input("today_dt-store","data")]):
+def update_today_str(date):
+	return utils.update_today_str(date)
 
     
     
