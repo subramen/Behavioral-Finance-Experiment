@@ -41,7 +41,7 @@ def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
         d3 = {'display':'block'}
         return [d1,d2,d3]
 
-    elif nclick1>1:
+    elif nclick1:
         d1 = {'display':'none'}
         d2 = {'display':'block'}
         d3 = {'display':'none'}

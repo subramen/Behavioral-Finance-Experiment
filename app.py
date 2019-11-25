@@ -27,7 +27,7 @@ def watercooler_break(interval):
 @app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
                [Input('user-begin', 'n_clicks'), Input('continue-button', 'n_clicks')],
                [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
-def start_exp(nclick1, dataend, mturk_id, surv1, surv2):
+def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
     return utils.start_exp(nclick1, nclick2, mturk_id, surv1, surv2)
 
     
