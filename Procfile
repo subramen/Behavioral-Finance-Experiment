@@ -1,1 +1,1 @@
-web: gunicorn app:server
+web: gunicorn 'app:wsgi_factory(330, 491, "duquesne")'
