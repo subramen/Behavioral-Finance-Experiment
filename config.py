@@ -10,7 +10,7 @@ import dash_html_components as html
 
 INTERVAL_LENGTH = 1500
 
-status0 = {'cash':1000, 'stock':0, 'position':0} #defaults
+status0 = {'cash':2500, 'stock':0, 'position':0} #defaults
 app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"} 
 
 
@@ -37,10 +37,10 @@ ans5 = ['No', 'Only Trade 1', 'Only Trade 2', 'Both Trades']
 screen1 = html.Div(id='screen1', children=[\
             html.Div(id='s1-toprow', style={'text-align':'center'}, children=[html.H1('Welcome!'), \
                    html.Br(),
-                   html.H4("In this task, you have $1,000 to invest in a large tech company."),
-                   html.H4(" Use the first five minutes to track the stock's movements."),\
+                   html.H4("In this task, you have $2,500 to invest in a large tech company."),
+                   html.H4("Use the first five minutes to track the stock's movements."),\
                    html.H4("You will get only two chances to trade. In a single trade, you may either buy or sell, never both."),\
-                   html.H4("Selected winners are eligible for Amazon gift cards worth their winnings. Play smart!", style={'color':'RoyalBlue'}),\
+                   html.H4("Selected winners are eligible for Amazon gift cards based on their winnings. Play smart!", style={'color':'RoyalBlue'}),\
                    html.H5('Do not click Back or Refresh!', style={'color':'Red'}),
                    html.Br(),html.Br(),]),
 
@@ -89,8 +89,6 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         html.Div(id='bottomrow', style={'width':'100%', 'overflow':'auto'}, children=[
                 html.Div(id='input-col', style={'float':'right', 'width':'40%', 'overflow':'auto'}, children=[
                     html.H3(id='ask-bid', children=' ', style={'color':'red'}),
-#                    html.Div(id='bid_submitted1', style={'display': 'none'}, children='no'),
-#                    html.Div(id='bid_submitted2', style={'display': 'none'}, children='no'),
                     html.Div(id='buy/sell', style={'float':'center', 'overflow':'auto'}, children=[
                          html.Div(dcc.Input(id="txn", type='number', placeholder='No. of Stocks', min=0), style={'float':'left'}),
                          dcc.RadioItems(id='buysell', options=radio_dicts([('BUY',1),('SELL',-1)]), style={'overflow':'auto'}),
@@ -100,7 +98,7 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
                          ])]),
 
                 html.Div(id='continue-col', style={'float':'right', 'width':'40%', 'overflow':'auto', 'display':'none'}, children=[
-                    html.Button('Continue', id='continue-button', style={'margin':'auto'}, disabled=True)]),
+                    html.Br(),html.Br(),html.Br(),html.Button('Continue', id='continue-button', style={'margin':'auto'}, disabled=True)]),
 
                 html.Div(id='status-col', style={'display':'inline-block', 'width':'25%','overflow':'auto'}, children=[
                     html.Table([

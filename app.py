@@ -106,7 +106,8 @@ def continue_to_conclusion(dataend):
 
 
 # CONCLUDE
-@app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style'), Output('rng','children'), Output('conclude','style')],
+@app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style'), Output('rng','children'), \
+	Output('conclude','style'), Output('end-submit', 'disabled')],
               [Input('end-submit', 'n_clicks')],
               [State('stock-qty-1','data'), State('stock-qty-2','data'),\
                State('txn-price-1','data'), State('txn-price-2','data'), State('position-store','data'),\

@@ -93,11 +93,11 @@ def get_df():
 
         
         
-#@app.callback([Output("today_price-store", "data"), Output("today_dt-store","data"), \
-#               Output('position-store','data'), Output('p&l-store','data'), Output('data-end', 'data')], 
-#              [Input("interval-component", "n_intervals")], \
-#              [State('stock-store','data'), State('stock-qty-1','data'), \
-#               State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data')])
+# @app.callback([Output("today_price-store", "data"), Output("today_dt-store","data"), \
+#                Output('position-store','data'), Output('p&l-store','data'), Output('data-end', 'data')], 
+#               [Input("interval-component", "n_intervals")], \
+#               [State('stock-store','data'), State('stock-qty-1','data'), \
+#                State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data'), State("cash-store",'data')])
 def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
     global PRICE_DF
     interval = interval or 0
@@ -105,7 +105,7 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
     df=None
     if ix>MAX_LEN:
         dataend=True
-        df = PRICE_DF.tail(1)
+        df = PRICE_DF.tail(1) 
     else:
         df = PRICE_DF.loc[ix]
     curr_price = round(float(df['High']), 2)
@@ -158,7 +158,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
     if ix>MAX_LEN:
         return True, True, 'Thanks'
     elif wc: 
-        return False, True, 'Trading paused due to high volume. Take a break to hydrate.'
+        return False, True, 'Trading paused due to high volatility. Take a break to hydrate.'
     elif screen2['display']=='block':
         if  PRICE_DF.loc[ix]['index2'] == end_P1:#, end_P2]:
             if not bid_submitted1: # PAUSE FOR BID SUBMIT
@@ -172,7 +172,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
                 return True, False, f"Trading resumed, enter buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
             else: # BID SUBMITTED. UNPAUSE
                 return False, True, 'Bid Accepted'
-        return False, True, 'Not accepting bids. Please study the market carefully.'
+        return False, True, 'Not accepting bids, watch the market closely.'
     else:
         raise PreventUpdate   
 
@@ -295,9 +295,7 @@ def continue_to_conclusion(dataend):
 
 
 def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5, app_name):
-    if exp_end is None:
-        raise PreventUpdate
-    if not mturk:
+    if not(s3 and s4 and s5 and exp_end):
         raise PreventUpdate
     
     win_style = {'text-align':'center'}
@@ -314,19 +312,19 @@ def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5,
 
     rng = ''.join(random.choice('0123456789ABCDEF') for i in range(12))
     
-    persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5)
+    persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng)
 
-    return(win_str, "Thank you. You may now close this window.", win_style, f"Enter this ID exactly on MTurk to recieve your compensation: {rng}", say_thanks)
+    return(win_str, "Thank you. You may now close this window.", win_style, f"Enter this ID exactly on MTurk to recieve your compensation: {rng}", say_thanks, True)
     
 
-def persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5):
+def persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng):
     # CREATE TABLE results (exp_id TEXT, mturk_id TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, \
     # winnings NUMERIC, sq1 NUMERIC, sq2 NUMERIC, sq3 NUMERIC, sq4 NUMERIC, sq5 NUMERIC, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cur = conn.cursor()
-    sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
-    cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5))
+    sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
+    cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5, rng))
     conn.commit()
     cur.close()
     conn.close()
