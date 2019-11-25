@@ -69,7 +69,7 @@ def get_df():
     price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
     price_df['index2'] = price_df.index//minutes_per_interval
     
-    ix_p1 = app.config['meta_tags'][0]*minutes_per_interval
+    ix_p1 = end_P1*minutes_per_interval
     ix_p2_old = 510
     price_df.loc[ix_p1:ix_p2_old]['High'] = dist_stretcher(price_df.loc[ix_p1:ix_p2_old]['High'].copy(), volatile_price_multiplier)
 
@@ -174,14 +174,14 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
     elif wc: 
         return False, True, 'Trading paused due to high volatility. Take a break to hydrate.'
     elif screen2['display']=='block':
-        if  PRICE_DF.loc[ix]['index2'] == app.config['meta_tags'][0]:#, app.config['meta_tags'][1]]:
+        if  PRICE_DF.loc[ix]['index2'] == end_P1:#, end_P2]:
             if not bid_submitted1: # PAUSE FOR BID SUBMIT
                 # Disable interval timer, Enable submit button, Prompt for bid
                 return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
             else: # BID SUBMITTED. UNPAUSE
                 # Enable interval timer, Disable submit button, 
                 return False, True, 'Bid Accepted'
-        if PRICE_DF.loc[ix]['index2'] == app.config['meta_tags'][1]:
+        if PRICE_DF.loc[ix]['index2'] == end_P2:
             if not bid_submitted2: # PAUSE FOR BID SUBMIT
                 return True, False, f"Trading resumed, enter buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
             else: # BID SUBMITTED. UNPAUSE
@@ -199,7 +199,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
 @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
 def watercooler_break(interval):
     global PRICE_DF
-    if ('wc' in app.config['meta_tags'][2]) and app.config['meta_tags'][0]+3<interval<app.config['meta_tags'][1]:
+    if ('wc' in APP_NAME) and end_P1+3<interval<end_P2:
         return True
     else:
         return False
@@ -237,11 +237,11 @@ def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, 
             curr_stock = curr_stock + stock_qty*buysell
        
             # BID SUBMITTED TRUE
-            if interval == app.config['meta_tags'][0] and not bidsubmitted1:
+            if interval == end_P1 and not bidsubmitted1:
                 bidsubmitted1 = True
                 x1 = stock_qty #Sql
                 cp1 = today_price #Sql
-            if interval == app.config['meta_tags'][1] and not bidsubmitted2:
+            if interval == end_P2 and not bidsubmitted2:
                 bidsubmitted2 =True
                 x2 = stock_qty*buysell
                 cp2 = today_price if buysell>0 else cp1
@@ -260,7 +260,7 @@ def plot_prices(interval, wc):
     pre = 0
     df = PRICE_DF[['strtime', 'High', 'Low']].loc[pre:ix]
     null_df = pd.DataFrame(columns=['strtime','High','Low'])
-    null_df['strtime'] = PRICE_DF['strtime'].loc[ix:ix+3*(app.config['meta_tags'][1]-app.config['meta_tags'][0])]
+    null_df['strtime'] = PRICE_DF['strtime'].loc[ix:ix+3*(end_P2-end_P1)]
     df = pd.concat([df,null_df]) # pad empty data points for right margin
 
     fig={'data':[], 'layout':{}}
@@ -274,8 +274,8 @@ def plot_prices(interval, wc):
         
     trace_vline_list=[]
     
-    if interval>=app.config['meta_tags'][0]:
-        row = PRICE_DF.loc[app.config['meta_tags'][0]*minutes_per_interval]
+    if interval>=end_P1:
+        row = PRICE_DF.loc[end_P1*minutes_per_interval]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
@@ -284,8 +284,8 @@ def plot_prices(interval, wc):
                 y1=row['High']+5,
                 line=dict(color='Red', width=1, dash='dot')))
 
-    if interval>=app.config['meta_tags'][1]:
-        row = PRICE_DF.loc[app.config['meta_tags'][1]*minutes_per_interval]
+    if interval>=end_P2:
+        row = PRICE_DF.loc[end_P2*minutes_per_interval]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
@@ -352,7 +352,7 @@ def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5)
     rng = ''.join(random.choice('0123456789ABCDEF') for i in range(12))
     say_thanks = {'display':'inline-block', 'text-align':'center'}
     netwin=round(curr_pos-cfg.status0['cash'],2)
-    persist_to_sql(app.config['meta_tags'][2], mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng)
+    persist_to_sql(APP_NAME, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng)
     
     win_style = {'text-align':'center'}
     win_str=""
