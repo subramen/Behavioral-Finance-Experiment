@@ -107,7 +107,7 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
         dataend=True
         df = PRICE_DF.tail(1)
     else:
-        df = PRICE_DF.iloc[ix]
+        df = PRICE_DF.loc[ix]
     curr_price = round(float(df['High']), 2)
     curr_dt = df['strtime']
     stock = stock or 0
@@ -160,14 +160,14 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
     elif wc: 
         return False, True, 'Trading paused due to high volume. Take a break to hydrate.'
     elif screen2['display']=='block':
-        if  PRICE_DF.iloc[ix]['index2'] == end_P1:#, end_P2]:
+        if  PRICE_DF.loc[ix]['index2'] == end_P1:#, end_P2]:
             if not bid_submitted1: # PAUSE FOR BID SUBMIT
                 # Disable interval timer, Enable submit button, Prompt for bid
                 return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
             else: # BID SUBMITTED. UNPAUSE
                 # Enable interval timer, Disable submit button, 
                 return False, True, 'Bid Accepted'
-        if PRICE_DF.iloc[ix]['index2'] == end_P2:
+        if PRICE_DF.loc[ix]['index2'] == end_P2:
             if not bid_submitted2: # PAUSE FOR BID SUBMIT
                 return True, False, f"Trading resumed, enter buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
             else: # BID SUBMITTED. UNPAUSE
@@ -223,10 +223,10 @@ def plot_prices(interval, wc):
         raise PreventUpdate
     ix = interval*minutes_per_interval
     pre = 0
-    df = PRICE_DF[['strtime', 'High', 'Low']].iloc[pre:ix]
+    df = PRICE_DF[['strtime', 'High', 'Low']].loc[pre:ix]
     # pad empty data points 
     null_df = pd.DataFrame(columns=['strtime','High','Low'])
-    null_df['strtime'] = PRICE_DF['strtime'].iloc[ix:ix+3*(end_P2-end_P1)]
+    null_df['strtime'] = PRICE_DF['strtime'].loc[ix:ix+3*(end_P2-end_P1)]
     
     df = pd.concat([df,null_df])
 
@@ -243,14 +243,24 @@ def plot_prices(interval, wc):
     trace_vline_list=[]
     
     if interval>=end_P1:
-        row = PRICE_DF.iloc[end_P1*minutes_per_interval]
+        row = PRICE_DF.loc[end_P1*minutes_per_interval]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
                 x1=row['strtime'],
                 y0=row['High']-5,
                 y1=row['High']+5,
-                line=dict(color='Red', width=3, dash='dot')))
+                line=dict(color='Red', width=1, dash='dot')))
+
+    if interval>=end_P2:
+        row = PRICE_DF.loc[end_P2*minutes_per_interval]
+        trace_vline_list.append(go.layout.Shape(
+                type="line",
+                x0=row['strtime'],
+                x1=row['strtime'],
+                y0=row['High']-5,
+                y1=row['High']+5,
+                line=dict(color='Red', width=1, dash='dot')))
 
     fig['data'] = [trace_high]
     
@@ -275,6 +285,13 @@ def plot_prices(interval, wc):
     fig['layout']['shapes'] = trace_vline_list
     
     return fig
+
+
+def continue_to_conclusion(dataend):
+    dataend = dataend or False
+    if dataend:
+        return {'display':'none'}, {'float':'right', 'width':'40%', 'overflow':'auto'}, False
+
 
 
 def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5, app_name):
@@ -309,7 +326,7 @@ def persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5):
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cur = conn.cursor()
     sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
-    cur.execute(sql, (app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5))
+    cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5))
     conn.commit()
     cur.close()
     conn.close()

@@ -39,8 +39,8 @@ screen1 = html.Div(id='screen1', children=[\
                    html.Br(),
                    html.H4("In this task, you have $1,000 to invest in a large tech company."),
                    html.H4(" Use the first five minutes to track the stock's movements."),\
-                   html.H4("You will get two chances to trade on the market."),\
-                   html.H4("Top 3 winners are eligible for Amazon gift cards worth their winnings. Play smart!", style={'color':'RoyalBlue'}),\
+                   html.H4("You will get only two chances to trade. In a single trade, you may either buy or sell, never both."),\
+                   html.H4("Selected winners are eligible for Amazon gift cards worth their winnings. Play smart!", style={'color':'RoyalBlue'}),\
                    html.H5('Do not click Back or Refresh!', style={'color':'Red'}),
                    html.Br(),html.Br(),]),
 
@@ -98,6 +98,9 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
                          html.Button('Submit', id='submit', hidden=True),
                          html.Div(id='buy-sell-status'),
                          ])]),
+
+                html.Div(id='continue-col', style={'float':'right', 'width':'40%', 'overflow':'auto', 'display':'none'}, children=[
+                    html.Button('Continue', id='continue-button', style={'margin':'auto'}, disabled=True)]),
 
                 html.Div(id='status-col', style={'display':'inline-block', 'width':'25%','overflow':'auto'}, children=[
                     html.Table([

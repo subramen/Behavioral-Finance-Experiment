@@ -99,6 +99,12 @@ def fast_forward_end(bid_submitted2):
     return utils.fast_forward_end(bid_submitted2)
 
 
+ #PAUSE BEFORE END
+ @app.callback([Output('input-col','style'), Output('continue-col','style'), Output('continue-button','disabled')],[Input('data-end','data')])
+ def continue_to_conclusion(dataend):
+ 	return utils.continue_to_conclusion(dataend)
+
+
 # CONCLUDE
 @app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style'), Output('rng','children'), Output('conclude','style')],
               [Input('end-submit', 'n_clicks')],
