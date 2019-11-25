@@ -29,7 +29,7 @@ ans1 = ['Never', 'Rarely', 'Occasionally', 'Often', 'Everyday']
 ans2 = ['No way!','Maybe not', "Can't say", 'Maybe', 'Of course!']
 ans3 = ['Not at all', 'I was distracted', 'Neutral', 'I was attentive', 'I watched it like a hawk!']
 ans4 = ['Anxious', 'Slightly nervous', 'Calm', 'Fairly optimistic', 'Confident!']
-ans5 = ['Only Trade 1', 'Only Trade 2', 'Both Trades']
+ans5 = ['No', 'Only Trade 1', 'Only Trade 2', 'Both Trades']
 
 
 
@@ -129,8 +129,8 @@ screen3 = html.Div(id='screen3', style={'display':'none'},children=[
                    html.H6("How did you feel between the first and second trade?"), 
                    dcc.RadioItems(id='survey4', options=radio_dicts(list(zip(ans4, pt5_vals))), inputStyle={'float':'left', 'margin': "5px 5px 0 2px"}, labelStyle={'float':'left', 'padding': "2px 2em 0 0"}),
                    html.Br(),
-                   html.H6("Given an option, would you change your trade decisions?"), 
-                   dcc.RadioItems(id='survey5', options=radio_dicts(list(zip(ans5, range(1,4)))), inputStyle={'float':'left', 'margin': "5px 5px 0 2px"}, labelStyle={'float':'left', 'padding': "2px 2em 0 0"}),
+                   html.H6("Given an option, would you change your trades?"), 
+                   dcc.RadioItems(id='survey5', options=radio_dicts(list(zip(ans5, range(1,5)))), inputStyle={'float':'left', 'margin': "5px 5px 0 2px"}, labelStyle={'float':'left', 'padding': "2px 2em 0 0"}),
                    html.Br(),html.Br(),html.Br(),
                    html.Button('Submit', id='end-submit', style={'display':'block','margin':'auto'})]),
 

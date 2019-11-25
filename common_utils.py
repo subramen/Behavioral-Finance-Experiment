@@ -70,7 +70,7 @@ def get_df():
         if not anchor:
             anchor = series.mean()
         return multiplier*(series-anchor) + anchor # X <- vpm*(x-mean) + mean
-        
+
     overall_price_multiplier = 6
     volatile_price_multiplier = 2
     
@@ -181,7 +181,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
 
 def fast_forward_end(bid_submitted2):
     if bid_submitted2:
-      return 1500
+      return 1000
     else:
       raise PreventUpdate
 
