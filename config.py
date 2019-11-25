@@ -10,11 +10,9 @@ import dash_html_components as html
 
 INTERVAL_LENGTH = 2500
 
-
-
-
 status0 = {'cash':1000, 'stock':0, 'position':0} #defaults
 app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"} 
+
 
 def radio_dicts(opts):
     n = len(opts)
@@ -24,12 +22,17 @@ def radio_dicts(opts):
         dictl[c]['value'] = v
     return dictl
 
+
+
 pt5_vals = range(1,6)
 ans1 = ['Never', 'Rarely', 'Occasionally', 'Often', 'Everyday']
 ans2 = ['No way!','Maybe not', "Can't say", 'Maybe', 'Of course!']
 ans3 = ['Not at all', 'I was distracted', 'Neutral', 'I was attentive', 'I watched it like a hawk!']
 ans4 = ['Anxious', 'Slightly nervous', 'Calm', 'Fairly optimistic', 'Confident!']
 ans5 = ['Only Trade 1', 'Only Trade 2', 'Both Trades']
+
+
+
 
 screen1 = html.Div(id='screen1', children=[\
             html.Div(id='s1-toprow', style={'text-align':'center'}, children=[html.H1('Welcome!'), \

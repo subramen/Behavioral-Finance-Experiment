@@ -18,19 +18,15 @@ DATABASE_URL = os.environ['DATABASE_URL']
 
 
 
+
+# GLOBALS
 WINDOW_SIZE = 500
-minutes_per_interval = 15  # CHANGE!
-overall_price_multiplier = 6
-volatile_price_multiplier = 2
-
+minutes_per_interval = 3 
 end_P1 = 330//minutes_per_interval
-end_P2 = 510//minutes_per_interval
+end_P2 = 491//minutes_per_interval
 
-df_start = 1000
-df_end = 1650
-
-MAX_LEN = df_end-df_start
-
+PRICE_DF = pd.read_csv('AAPL_Final_Trend.csv')
+MAX_LEN = len(PRICE_DF)
 
 
 # Returns:screen visibility flag
@@ -68,13 +64,18 @@ def watercooler_break(interval, app_name):
 
 
 
-def dist_stretcher(series, multiplier):
-    meann = series.mean()
-    return multiplier*(series-meann) + meann # X <- vpm*(x-mean) + mean
+def dist_stretcher(series, multiplier, anchor=None):
+    if not anchor:
+        anchor = series.mean()
+
+    return multiplier*(series-anchor) + anchor # X <- vpm*(x-mean) + mean
 
 
 # Returns:Price dataset
 def get_df():
+    overall_price_multiplier = 6
+    volatile_price_multiplier = 2
+    
     price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
     price_df = price_df[price_df.Volume>0]
     price_df=price_df.iloc[df_start:df_end]
@@ -83,17 +84,15 @@ def get_df():
     price_df['index2'] = price_df.index//minutes_per_interval
     
     ix_p1 = end_P1*minutes_per_interval
-    ix_p2 = end_P2*minutes_per_interval
-    price_df.loc[ix_p1:ix_p2]['High'] = dist_stretcher(price_df.loc[ix_p1:ix_p2]['High'].copy(), volatile_price_multiplier)
+    ix_p2_old = 510
+    price_df.loc[ix_p1:ix_p2_old]['High'] = dist_stretcher(price_df.loc[ix_p1:ix_p2_old]['High'].copy(), volatile_price_multiplier)
+
+    # additional volatility to get equal divergence from first buy price
+    price_df.loc[479:ix_p2_old]['High'] = dist_stretcher(price_df.loc[479:ix_p2_old]['High'].copy(), volatile_price_multiplier, price_df.loc[501]['High'])
     
     price_df['High']= dist_stretcher(price_df['High'].copy(), overall_price_multiplier)
     return price_df
 
-PRICE_DF = get_df()
-
-
-
-        
         
         
 #@app.callback([Output("today_price-store", "data"), Output("today_dt-store","data"), \
@@ -224,9 +223,7 @@ def plot_prices(interval, wc):
     global PRICE_DF
     if wc:
         raise PreventUpdate
-    
     ix = interval*minutes_per_interval
-#    pre = max(0, ix-WINDOW_SIZE)
     pre = 0
     df = PRICE_DF[['strtime', 'High', 'Low']].iloc[pre:ix]
     # pad empty data points 
