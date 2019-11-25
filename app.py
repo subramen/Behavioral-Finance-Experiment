@@ -24,15 +24,20 @@ PRICE_DF = pd.read_csv('AAPL_Final_Trend.csv')
 MAX_LEN = len(PRICE_DF)
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app.layout = cfg.app_layout
+# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+# app.layout = cfg.app_layout
 
-APP_NAME = end_P1 = end_P2 = None
+app = APP_NAME = end_P1 = end_P2 = None
 
 
 # Allowed app-names: "rc_profit" (p2=491), "rc_loss" (p2=502), "wc_profit", "wc_loss"
 def wsgi_factory(end_P1arg, end_P2arg, APP_NAMEarg):
 	global app, end_P1, end_P2, APP_NAME
+
+	external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+	app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+	app.layout = cfg.app_layout
 	APP_NAME = APP_NAMEarg
 	end_P1 = end_P1arg
 	end_P2 = end_P2arg
@@ -88,6 +93,7 @@ def get_df():
                [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
 def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
     nclick1 = nclick1 or 0
+    print(APP_NAME, end_P1)
     if not (surv1 and surv2 and mturk_id):
         raise PreventUpdate
     elif nclick2:
