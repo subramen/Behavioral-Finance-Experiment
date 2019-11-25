@@ -27,14 +27,16 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = cfg.app_layout
 
+APP_NAME = end_P1 = end_P2 = None
 
 
 # Allowed app-names: "rc_profit" (p2=491), "rc_loss" (p2=502), "wc_profit", "wc_loss"
-def wsgi_factory(end_P1, end_P2, APP_NAME):
-	global app
-	app.config['meta_tags']=[end_P1, end_P2, APP_NAME]
-	server = app.server
-	return server
+def wsgi_factory(end_P1arg, end_P2arg, APP_NAMEarg):
+	global app, end_P1, end_P2, APP_NAME
+	APP_NAME = APP_NAMEarg
+	end_P1 = end_P1arg
+	end_P2 = end_P2arg
+	return app.server
 
 
 
