@@ -30,12 +30,12 @@ MAX_LEN = len(PRICE_DF)
 
 
 # Returns:screen visibility flag
-def start_exp(nclick1, dataend, mturk_id, surv1, surv2):
+def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
     nclick1 = nclick1 or 0
     if not (surv1 and surv2 and mturk_id):
         raise PreventUpdate
 
-    elif dataend:
+    elif nclick2:
         d1 = {'display':'none'}
         d2 = {'display':'none'}
         d3 = {'display':'block'}

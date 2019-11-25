@@ -25,10 +25,10 @@ def watercooler_break(interval):
 
 # SCREEN CONTROL
 @app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
-               [Input('user-begin', 'n_clicks'), Input('data-end', 'data')],
+               [Input('user-begin', 'n_clicks'), Input('continue-button', 'n_clicks')],
                [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
 def start_exp(nclick1, dataend, mturk_id, surv1, surv2):
-    return utils.start_exp(nclick1, dataend, mturk_id, surv1, surv2)
+    return utils.start_exp(nclick1, nclick2, mturk_id, surv1, surv2)
 
     
 
@@ -100,9 +100,9 @@ def fast_forward_end(bid_submitted2):
 
 
  #PAUSE BEFORE END
- @app.callback([Output('input-col','style'), Output('continue-col','style'), Output('continue-button','disabled')],[Input('data-end','data')])
- def continue_to_conclusion(dataend):
- 	return utils.continue_to_conclusion(dataend)
+@app.callback([Output('input-col','style'), Output('continue-col','style'), Output('continue-button','disabled')],[Input('data-end','data')])
+def continue_to_conclusion(dataend):
+	return utils.continue_to_conclusion(dataend)
 
 
 # CONCLUDE
