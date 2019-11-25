@@ -327,9 +327,9 @@ def fast_forward_end(bid_submitted2):
  #PAUSE BEFORE END
 @app.callback([Output('input-col','style'), Output('continue-col','style'), Output('continue-button','disabled')],[Input('data-end','data')])
 def continue_to_conclusion(dataend):
-    dataend = dataend or False
-    if dataend: 
-    	return {'display':'none'}, {'float':'right', 'width':'40%', 'overflow':'auto'}, False
+	dataend = dataend or False
+	if dataend: 
+		return ({'display':'none'}, {'float':'right', 'width':'40%', 'overflow':'auto'}, False)
 	else:
 		raise PreventUpdate
 
