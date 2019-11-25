@@ -2,27 +2,33 @@ import dash
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import common_utils as utils
+import flask
+import config
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('app2', external_stylesheets=external_stylesheets)
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
 
 
 
-app.layout = html.Div(utils.get_screens())
+app.layout = config.app_layout
 
 
 
 # WATERCOOLER
 @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
 def watercooler_break(interval):
-    return utils.watercooler_break(interval, app.config['name'])
+    return utils.watercooler_break(interval, "app2")
 
 
 # SCREEN CONTROL
-@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')], \
-               [Input('user-begin', 'n_clicks'), Input('data-end', 'data')])
-def start_exp(nclick1, dataend):
-    return utils.start_exp(nclick1, dataend)
+@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
+               [Input('user-begin', 'n_clicks'), Input('data-end', 'data')],
+               [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
+def start_exp(nclick1, dataend, mturk_id, surv1, surv2):
+    return utils.start_exp(nclick1, dataend, mturk_id, surv1, surv2)
 
     
 
@@ -54,7 +60,7 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
 @app.callback([Output("interval-component", "disabled"), Output("submit", "disabled"),\
                Output("ask-bid", "children")], 
                [Input("interval-component", "n_intervals"), Input("bid_submitted1",'data'), \
-                Input("bid_submitted2",'data'), Input('user-begin', 'n_clicks'), Input('data-end', 'data'), Input("watercooler","data")],
+                Input("bid_submitted2",'data'), Input('screen2', 'style'), Input('data-end', 'data'), Input("watercooler","data")],
                 [State("cash-store",'data'), State('today_price-store','data'), State('stock-store','data'),])
 def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
     return utils.toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock)
@@ -94,15 +100,15 @@ def fast_forward_end(bid_submitted2):
 
 
 # CONCLUDE
-@app.callback(Output('ty', 'children'),
-              [Input('exp-end', 'n_clicks')],
+@app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style'), Output('rng','children'), Output('conclude','style')],
+              [Input('end-submit', 'n_clicks')],
               [State('stock-qty-1','data'), State('stock-qty-2','data'),\
-               State('txn-price-1','data'), State('txn-price-2','data'), State('mturk-id','value')])
-def end_experiment(exp_end, x1, x2, p1, p2, mturk):
-    return utils.end_experiment(exp_end, x1, x2, p1, p2, mturk, app.config['name'])
+               State('txn-price-1','data'), State('txn-price-2','data'), State('position-store','data'),\
+               State('mturk-id-input','value'), State('survey1','value'), State('survey2','value'), State('survey3','value'), \
+               State('survey4','value'), State('survey5','value')])
+def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5):
+    return utils.end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5, "app2")
     
     
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True) 
+if __name__ == "__main__":
+    app.run_server() 
