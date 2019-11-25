@@ -8,7 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 
-INTERVAL_LENGTH = 2500
+INTERVAL_LENGTH = 1500
 
 status0 = {'cash':1000, 'stock':0, 'position':0} #defaults
 app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"} 

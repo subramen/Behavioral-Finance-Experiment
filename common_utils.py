@@ -21,7 +21,7 @@ DATABASE_URL = os.environ['DATABASE_URL']
 
 # GLOBALS
 WINDOW_SIZE = 500
-minutes_per_interval = 3 
+minutes_per_interval = 2
 end_P1 = 330//minutes_per_interval
 end_P2 = 491//minutes_per_interval
 
@@ -64,21 +64,19 @@ def watercooler_break(interval, app_name):
 
 
 
-def dist_stretcher(series, multiplier, anchor=None):
-    if not anchor:
-        anchor = series.mean()
-
-    return multiplier*(series-anchor) + anchor # X <- vpm*(x-mean) + mean
-
-
 # Returns:Price dataset
 def get_df():
+    def dist_stretcher(series, multiplier, anchor=None):
+        if not anchor:
+            anchor = series.mean()
+        return multiplier*(series-anchor) + anchor # X <- vpm*(x-mean) + mean
+        
     overall_price_multiplier = 6
     volatile_price_multiplier = 2
     
     price_df = pd.read_csv('AAPL_1M_16.09.2019-20.09.2019.csv', parse_dates=['Localtime'])
     price_df = price_df[price_df.Volume>0]
-    price_df=price_df.iloc[df_start:df_end]
+    price_df=price_df.iloc[1000:1650]
     price_df.index = range(len(price_df))
     price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
     price_df['index2'] = price_df.index//minutes_per_interval
