@@ -59,8 +59,8 @@ screen1 = html.Div(id='screen1', children=[\
 
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         # TITLE
-        html.H3(children='Stock Market'),
-        html.P("Click and drag to zoom in. Double-click to zoom out"),
+        # html.H3(children='Stock Market'),
+        html.H4("Click and drag to zoom in. Double-click to zoom out"),
         
         # INTERNAL VARIABLES
         dcc.Interval(id='interval-component',interval=INTERVAL_LENGTH, n_intervals=0, disabled=True),
