@@ -52,7 +52,7 @@ def update_str(price,date, wc, cash, stock, pos, pnl):
     return utils.update_str(price, date, wc, cash, stock, pos, pnl)
 
 
-@app.callback(Output("today-str", "children"), [Input("today_dt-store","data")]):
+@app.callback(Output("today-str", "children"), [Input("today_dt-store","data")])
 def update_today_str(date):
 	return utils.update_today_str(date)
 
