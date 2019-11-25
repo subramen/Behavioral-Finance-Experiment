@@ -77,23 +77,34 @@ def get_df():
 
 
 # SCREEN CONTROL
-@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
-               [Input('user-begin', 'n_clicks'), Input('continue-button', 'n_clicks')],
+@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen-instr','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
+               [Input('user-begin', 'n_clicks'), Input('im-ready','n_clicks'), Input('continue-button', 'n_clicks')],
                [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
-def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
-    nclick1 = nclick1 or 0
+def start_exp(intro_click, ready_click, continue_click, mturk_id, surv1, surv2):
+    intro_click = intro_click or 0
     if not (surv1 and surv2 and mturk_id):
         raise PreventUpdate
-    elif nclick2:
-        d1 = {'display':'none'}
-        d2 = {'display':'none'}
-        d3 = {'display':'block'}
-        return [d1,d2,d3]
-    elif nclick1:
-        d1 = {'display':'none'}
-        d2 = {'display':'block'}
-        d3 = {'display':'none'}
-        return [d1, d2, d3]
+
+    elif continue_click:
+        d_intro = {'display':'none'}
+        d_si = {'display':'none'}
+        d_dash = {'display':'none'}
+        d_end = {'display':'block'}
+        return [d_intro, d_si, d_dash, d_end]
+
+    elif ready_click:
+    	d_intro = {'display':'none'}
+        d_si = {'display':'none'}
+        d_dash = {'display':'block'}
+        d_end = {'display':'none'}
+        return [d_intro, d_si, d_dash, d_end]
+    
+    elif intro_click:
+        d_intro = {'display':'none'}
+        d_si = {'display':'block'}
+        d_dash = {'display':'none'}
+        d_end = {'display':'none'}
+        return [d_intro, d_si, d_dash, d_end]
     else:
         raise PreventUpdate
 
@@ -105,8 +116,7 @@ def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
               [Input("interval-component", "n_intervals")], \
               [State('stock-store','data'), State('stock-qty-1','data'), \
                State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data'), State("cash-store",'data')])
-def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
-	print(interval, APP_NAME, end_P1)
+def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):\
 	global PRICE_DF
 	interval = interval or 0
 	ix = interval*minutes_per_interval
@@ -143,7 +153,7 @@ def update_str(price, date, wc, cash, stock, pos, pnl):
     pos = pos or 0
     pnlstyle_dict = {'display':'block', 'color':'red'} if pnl<0 else {'display':'block', 'color':'green'}
     posstyle_dict = {'display':'block', 'color':'red'} if pos<cfg.status0['cash'] else {'display':'block', 'color':'green'}
-    return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Unrealized P&L: ${pnl}", pnlstyle_dict, posstyle_dict
+    return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Current P&L: ${pnl}", pnlstyle_dict, posstyle_dict
 
 
 @app.callback(Output("today-str", "children"), [Input("today_dt-store","data")])
@@ -187,9 +197,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
 
 
 
-####################################
-## NEED ARGS
-####################################
+
 # WATERCOOLER
 @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
 def watercooler_break(interval):
@@ -329,9 +337,6 @@ def continue_to_conclusion(dataend):
 
 
 
-####################################
-## NEED ARGS
-####################################
 # CONCLUDE
 @app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style'), Output('rng','children'), \
 	Output('conclude','style'), Output('end-submit', 'disabled')],

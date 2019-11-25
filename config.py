@@ -26,7 +26,7 @@ def radio_dicts(opts):
 
 pt5_vals = range(1,6)
 ans1 = ['Never', 'Rarely', 'Occasionally', 'Often', 'Everyday']
-ans2 = ['No way!','Maybe not', "Can't say", 'Maybe', 'Of course!']
+ans2 = ['No', 'Yes']
 ans3 = ['Not at all', 'I was distracted', 'Neutral', 'I was attentive', 'I watched it like a hawk!']
 ans4 = ['Anxious', 'Slightly nervous', 'Calm', 'Fairly optimistic', 'Confident!']
 ans5 = ['No', 'Only Trade 1', 'Only Trade 2', 'Both Trades']
@@ -38,8 +38,7 @@ screen1 = html.Div(id='screen1', children=[\
             html.Div(id='s1-toprow', style={'text-align':'center'}, children=[html.H1('Welcome!'), \
                    html.Br(),
                    html.H4("In this task, you have $2,500 to invest in a large tech company."),
-                   html.H4("Use the first five minutes to track the stock's movements."),\
-                   html.H4("You will get only two chances to trade. In a single trade, you may either buy or sell, never both."),\
+                   html.H4("You will have time to track the stock's movements. Make trades to make money!"),\
                    html.H4("Selected winners are eligible for Amazon gift cards based on their winnings. Play smart!", style={'color':'RoyalBlue'}),\
                    html.H5('Do not click Back or Refresh!', style={'color':'Red'}),
                    html.Br(),html.Br(),]),
@@ -51,11 +50,38 @@ screen1 = html.Div(id='screen1', children=[\
                    html.H6("How frequently do you trade on the stock market?"), 
                    dcc.RadioItems(id='survey1', options=radio_dicts(list(zip(ans1, pt5_vals))), inputStyle={'float':'left', 'margin': "5px 5px 0 2px"}, labelStyle={'float':'left', 'padding': "2px 2em 0 0"}),
                    html.Br(),
-                   html.H6("Do you think you will make a profit today?"), 
-                   dcc.RadioItems(id='survey2', options=radio_dicts(list(zip(ans2, pt5_vals))), inputStyle={'float':'left', 'margin': "5px 5px 0 2px"}, labelStyle={'float':'left', 'padding': "2px 2em 0 0"}),
+                   html.H6("Do you have any investments you actively manage?"), 
+                   dcc.RadioItems(id='survey2', options=radio_dicts(list(zip(ans2, range(1,3)))), inputStyle={'float':'left', 'margin': "5px 5px 0 2px"}, labelStyle={'float':'left', 'padding': "2px 2em 0 0"}),
                    html.Br(),html.Br(),html.Br(),
                    html.Button('Begin', id='user-begin', style={'display':'block','margin':'auto'})])
             ])
+
+screen_instructions = html.Div(id='screen-instr', children=[
+                    html.H1('Instructions'), \
+                    html.Br(),
+                    html.H4("The next screen will take you to your trading interface (shown below)."),
+                    ### IMAGE ####
+                    dcc.Markdown('''
+                    - The interface is divided into two halves - the top half shows the stock's movement in real-time. The bottom half is your trading dashboard.
+
+                    - The stock price will automatically update every 3 seconds. The bottom left corner shows you the current price and your profit/loss.
+                    - The bottom center is your dashboard. Here, you can track
+                      - how much cash you have available
+                      - how many stocks you own
+                      - your current net worth (aggregate value of cash and stocks you own)
+                    - The bottom right is your control panel. You can use this to make trades.
+
+                    - For the first 5 minutes, observe the stock's movements. You can use this time to formulate a trading strategy. 
+                    - You will then be prompted to make your first trade. Since you don't have any stock to sell, you can choose to buy 0 or more stocks. Only valid bids will be accepted.
+                    - For the next 3 minutes you can track how the stock market is influencing your net worth. You may not place a bid at this time.
+                    - Finally, you will be prompted to make your second and final trade. Based on your knowledge of the stock, place a trade that maximizes your net worth. Remember, this is what will decide if you're a winner.
+                    - You will receive a 12-digit code in the final screen. You must enter this code in MTurk as confirmation of completion.
+
+                    - The graph is interactive. You can zoom in by clicking and dragging across the graph. Try to use this information while making your decisions. 
+                    '''),
+                    html.Br(),html.Br(),html.Br(),
+                    html.Button("I'm ready!", id='im-ready', style={'display':'block','margin':'auto', 'text-align':'center'})
+                       ])
 
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         # TITLE
@@ -143,7 +169,7 @@ screen3 = html.Div(id='screen3', style={'display':'none'},children=[
                             
 
 
-app_layout = html.Div([screen1, screen2, screen3])
+app_layout = html.Div([screen1, screen_instructions, screen2, screen3])
 
 
 
