@@ -10,10 +10,11 @@ import sqlite3
 from dash.exceptions import PreventUpdate
 import math
 from plotly import graph_objs as go
+import random
 
 import os
-# import psycopg2
-# DATABASE_URL = os.environ['DATABASE_URL'] 
+import psycopg2
+DATABASE_URL = os.environ['DATABASE_URL'] 
 
 
 
@@ -33,24 +34,25 @@ MAX_LEN = df_end-df_start
 
 
 # Returns:screen visibility flag
-def start_exp(nclick1, dataend):
-    if dataend:
+def start_exp(nclick1, dataend, mturk_id, surv1, surv2):
+    nclick1 = nclick1 or 0
+    if not (surv1 and surv2 and mturk_id):
+        raise PreventUpdate
+
+    elif dataend:
         d1 = {'display':'none'}
         d2 = {'display':'none'}
         d3 = {'display':'block'}
         return [d1,d2,d3]
-    elif nclick1:
-        d1 = {'display':'none', 'float':'center'}
+
+    elif nclick1>1:
+        d1 = {'display':'none'}
         d2 = {'display':'block'}
         d3 = {'display':'none'}
-        return [d1,d2, d3]
+        return [d1, d2, d3]
+    
     else:
         raise PreventUpdate
-
-
-
-
-
 
 
 
@@ -152,7 +154,7 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
 #               [Input("interval-component", "n_intervals"), Input("bid_submitted1",'children'), \
 #                Input("bid_submitted2",'children'), Input('user-begin', 'n_clicks'), Input('data-end', 'data'), Input("watercooler","data")],
 #                [State("cash-store",'data'), State('today_price-store','data'), State('stock-store','data'),])
-def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
+def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, dataend, wc, cash, price, stock):
     global PRICE_DF
     interval = interval or 0
     ix = interval*minutes_per_interval
@@ -160,7 +162,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_clic
         return True, True, 'Thanks'
     elif wc: 
         return False, True, 'Trading paused due to high volume. Take a break to hydrate.'
-    elif begin_click:
+    elif screen2['display']=='block':
         if  PRICE_DF.iloc[ix]['index2'] == end_P1:#, end_P2]:
             if not bid_submitted1: # PAUSE FOR BID SUBMIT
                 # Disable interval timer, Enable submit button, Prompt for bid
@@ -190,23 +192,9 @@ def fast_forward_end(bid_submitted2):
 
 
 
-# GET BID
-#@app.callback([Output("cash-store",'data'), Output('stock-store','data'), \
-#               Output('bid_submitted1','children'), Output('bid_submitted2','children'), \
-#               Output('stock-qty-1','data'), Output('stock-qty-2','data'),\
-#               Output('txn-price-1','data'), Output('txn-price-2','data')], 
-#    
-#              [Input("submit",'n_clicks')],
-#    
-#              [State('txn','value'), State('buysell','value'), State("cash-store",'data'), \
-#               State('stock-store','data'), State('today_price-store','data'), \
-#               State("interval-component", "n_intervals"), State('bid_submitted1','children'), \
-#               State('bid_submitted2','children'), State('stock-qty-1','data'), State('stock-qty-2','data'),\
-#               State('txn-price-1','data'), State('txn-price-2','data')]
-#          )
 def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, interval, bidsubmitted1, bidsubmitted2, x1, x2, cp1, cp2):
     global PRICE_DF
-    if not stock_qty:     # Empty input
+    if not (stock_qty and buysell):     # Empty input
         raise PreventUpdate
     else:
         # VALIDATE INPUT
@@ -231,9 +219,7 @@ def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, 
             return round(curr_cash,2), curr_stock, bidsubmitted1, bidsubmitted2, x1, x2, cp1, cp2
     
     
-#@app.callback(
-#    Output("price-graph", "figure"), [Input("interval-component", "n_intervals"), Input("watercooler","data")]
-#)
+
 def plot_prices(interval, wc):
     global PRICE_DF
     if wc:
@@ -259,7 +245,6 @@ def plot_prices(interval, wc):
         line = dict(color = '#17BECF'),
         opacity = 0.8)
         
-#    line_x0=end_P1*minutes_per_interval
     trace_vline_list=[]
     
     if interval>=end_P1:
@@ -271,25 +256,14 @@ def plot_prices(interval, wc):
                 y0=row['High']-5,
                 y1=row['High']+5,
                 line=dict(color='Red', width=3, dash='dot')))
-    #    
-#    trace_low = go.Scatter(
-#        x=df['strtime'],
-#        y=df['Low'],
-#        name = "Stock Low",
-#        line = dict(color = '#7F7F7F'),
-#        opacity = 0.8)
-    
-#    fig['data'] = [trace_high,trace_low]
+
     fig['data'] = [trace_high]
     
     
     fig["layout"]["uirevision"] = "The User is always right"  # Ensures zoom on graph is the same on update
     fig["layout"]["margin"] = {"t": 10, "l": 50, "b": 40, "r": 25}
     fig["layout"]["autosize"] = True
-#    fig["layout"]["height"] = 450
-#    fig["layout"]["width"] = 800
     fig['layout']['xaxis'] = dict()
-#    fig["layout"]["xaxis"]["tickformat"] = "%d %b %H:%M"
     fig["layout"]["xaxis"]["type"] = "category"
     fig["layout"]["xaxis"]["showticklabels"]=False
     fig["layout"]["xaxis"]["ticks"]="inside"
@@ -308,14 +282,16 @@ def plot_prices(interval, wc):
     return fig
 
 
-def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name, curr_pos):
+def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5, app_name):
     if exp_end is None:
         raise PreventUpdate
     if not mturk:
         raise PreventUpdate
     
-    win_str=""
     win_style = {'text-align':'center'}
+    say_thanks = {'display':'inline-block', 'text-align':'center'}
+
+    win_str=""
     netwin=round(curr_pos-cfg.status0['cash'],2)
     if netwin>0:
         win_str = f"You made a profit of ${netwin}. If you are a selected winner, we will be in touch."
@@ -323,19 +299,22 @@ def end_experiment(exp_end, x1, x2, p1, p2, mturk, app_name, curr_pos):
     else:
         win_str = f"You made a loss of ${netwin}. If you are a selected winner, we will be in touch."
         win_style['color'] = 'Red'
+
+    rng = ''.join(random.choice('0123456789ABCDEF') for i in range(12))
     
-    persist_to_sql(x1, x2, p1, p2, mturk, app_name, netwin)
+    persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5)
 
-    return(win_str, "Thank you. You may now close this window.", win_style)
+    return(win_str, "Thank you. You may now close this window.", win_style, f"Enter this ID exactly on MTurk to recieve your compensation: {rng}", say_thanks)
     
 
-def persist_to_sql(x1, x2, p1, p2, mturk, app_name, netwin):
-    # CREATE TABLE results (exp_id TEXT, mturk_id TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, winnings NUMERIC)
-
+def persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5):
+    # CREATE TABLE results (exp_id TEXT, mturk_id TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, \
+    # winnings NUMERIC, sq1 NUMERIC, sq2 NUMERIC, sq3 NUMERIC, sq4 NUMERIC, sq5 NUMERIC, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cur = conn.cursor()
-    sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s)"
-    cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin))
+    sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
+    cur.execute(sql, (app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5))
     conn.commit()
     cur.close()
     conn.close()

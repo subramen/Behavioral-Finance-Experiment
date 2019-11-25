@@ -23,11 +23,11 @@ def watercooler_break(interval):
 
 
 # SCREEN CONTROL
-@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')], \
+@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
                [Input('user-begin', 'n_clicks'), Input('data-end', 'data')],
-               [State('mturk-id','value')])
-def start_exp(nclick1, dataend):
-    return utils.start_exp(nclick1, dataend)
+               [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
+def start_exp(nclick1, dataend, mturk_id, surv1, surv2):
+    return utils.start_exp(nclick1, dataend, mturk_id, surv1, surv2)
 
     
 
@@ -59,7 +59,7 @@ def update_today_str(price, date, wc, cash, stock, pos, pnl):
 @app.callback([Output("interval-component", "disabled"), Output("submit", "disabled"),\
                Output("ask-bid", "children")], 
                [Input("interval-component", "n_intervals"), Input("bid_submitted1",'data'), \
-                Input("bid_submitted2",'data'), Input('user-begin', 'n_clicks'), Input('data-end', 'data'), Input("watercooler","data")],
+                Input("bid_submitted2",'data'), Input('screen2', 'style'), Input('data-end', 'data'), Input("watercooler","data")],
                 [State("cash-store",'data'), State('today_price-store','data'), State('stock-store','data'),])
 def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock):
     return utils.toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, begin_click, dataend, wc, cash, price, stock)
@@ -99,13 +99,15 @@ def fast_forward_end(bid_submitted2):
 
 
 # CONCLUDE
-@app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style')],
-              [Input('mturk-submit', 'n_clicks')],
+@app.callback([Output('winnings','children'),Output('ty', 'children'), Output('winnings','style'), Output('rng','children'), Output('conclude','style')],
+              [Input('end-submit', 'n_clicks')],
               [State('stock-qty-1','data'), State('stock-qty-2','data'),\
-               State('txn-price-1','data'), State('txn-price-2','data'), State('mturk-id','value'), State('position-store','data'),])
-def end_experiment(exp_end, x1, x2, p1, p2, mturk, curr_pos):
-    return utils.end_experiment(exp_end, x1, x2, p1, p2, mturk, "app1", curr_pos)
+               State('txn-price-1','data'), State('txn-price-2','data'), State('position-store','data'),\
+               State('mturk-id-input','value'), State('survey1','value'), State('survey2','value'), State('survey3','value'), \
+               State('survey4','value'), State('survey5','value')])
+def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5):
+    return utils.end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5, "app1")
     
     
 if __name__ == "__main__":
-    app.run_server() 
+    app.run_server(debug=True) 
