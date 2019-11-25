@@ -118,25 +118,25 @@ def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
                State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data'), State("cash-store",'data')])
 def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
 	print(interval, APP_NAME, end_P1)
-    global PRICE_DF
-    interval = interval or 0
-    ix = interval*minutes_per_interval
-    df=None
-    if ix>MAX_LEN:
-        dataend=True
-        df = PRICE_DF.tail(1) 
-    else:
-        df = PRICE_DF.loc[ix]
-    curr_price = round(float(df['High']), 2)
-    curr_dt = df['strtime']
-    stock = stock or 0
-    curr_pos = round(stock*curr_price+cash, 2)
-    cp1 = cp1 or 0
-    cp2 = cp2 or 0
-    x1 = x1 or 0
-    x2 = x2 or 0
-    curr_pnl = round((curr_price-cp1)*x1+(curr_price-cp2)*x2, 2)
-    return curr_price, curr_dt, curr_pos, curr_pnl, dataend
+	global PRICE_DF
+	interval = interval or 0
+	ix = interval*minutes_per_interval
+	df=None
+	if ix>MAX_LEN:
+	    dataend=True
+	    df = PRICE_DF.tail(1) 
+	else:
+	    df = PRICE_DF.loc[ix]
+	curr_price = round(float(df['High']), 2)
+	curr_dt = df['strtime']
+	stock = stock or 0
+	curr_pos = round(stock*curr_price+cash, 2)
+	cp1 = cp1 or 0
+	cp2 = cp2 or 0
+	x1 = x1 or 0
+	x2 = x2 or 0
+	curr_pnl = round((curr_price-cp1)*x1+(curr_price-cp2)*x2, 2)
+	return curr_price, curr_dt, curr_pos, curr_pnl, dataend
 
 
 
