@@ -358,8 +358,6 @@ def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5,
     
 
 
-
-    
 if __name__ == "__main__":
 	print("this is main")
-    app.run_server() 
+	app.run_server() 
