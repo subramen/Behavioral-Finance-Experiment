@@ -93,7 +93,6 @@ def get_df():
                [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
 def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
     nclick1 = nclick1 or 0
-    print(APP_NAME, end_P1)
     if not (surv1 and surv2 and mturk_id):
         raise PreventUpdate
     elif nclick2:
@@ -118,6 +117,7 @@ def start_exp(nclick1, nclick2, mturk_id, surv1, surv2):
               [State('stock-store','data'), State('stock-qty-1','data'), \
                State('stock-qty-2','data'), State('txn-price-1','data'), State('txn-price-2','data'), State('data-end','data'), State("cash-store",'data')])
 def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
+	print(interval, APP_NAME, end_P1)
     global PRICE_DF
     interval = interval or 0
     ix = interval*minutes_per_interval
