@@ -15,6 +15,10 @@ import psycopg2
 DATABASE_URL = os.environ['DATABASE_URL'] 
 
 
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.layout = cfg.app_layout
+server=app.server
 
 
 # OPERATIVE globals
@@ -23,26 +27,11 @@ minutes_per_interval = 2
 PRICE_DF = pd.read_csv('AAPL_Final_Trend.csv')
 MAX_LEN = len(PRICE_DF)
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-# app.layout = cfg.app_layout
-
-app = APP_NAME = end_P1 = end_P2 = None
-
 
 # Allowed app-names: "rc_profit" (p2=491), "rc_loss" (p2=502), "wc_profit", "wc_loss"
-def wsgi_factory(end_P1arg, end_P2arg, APP_NAMEarg):
-	global app, end_P1, end_P2, APP_NAME
-
-	external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-	app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-	app.layout = cfg.app_layout
-	APP_NAME = APP_NAMEarg
-	end_P1 = end_P1arg
-	end_P2 = end_P2arg
-	return app.server
-
+APP_NAME = os.environ.get('APP_NAME', None)
+end_P1 = 330//minutes_per_interval
+end_P2 = 491//minutes_per_interval if 'profit' in APP_NAME else 502//minutes_per_interval
 
 
 

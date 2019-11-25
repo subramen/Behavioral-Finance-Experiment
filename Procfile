@@ -1,1 +1,1 @@
-web: gunicorn 'app:wsgi_factory(330, 491, "rc_profit")'
+web: gunicorn app:server
