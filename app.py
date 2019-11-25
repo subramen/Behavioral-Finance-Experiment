@@ -14,33 +14,40 @@ import os
 import psycopg2
 DATABASE_URL = os.environ['DATABASE_URL'] 
 
-# DASH-FLASK globals
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-# app = dash.Dash(__name__, external_stylesheets=external_stylesheets, meta_tags=[end_P1, end_P2, APP_NAME])
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-server = app.server
-app.layout = cfg.app_layout
+
 
 
 # OPERATIVE globals
 WINDOW_SIZE = 500
 minutes_per_interval = 2
-end_P1 = 330//minutes_per_interval
-end_P2 = 491//minutes_per_interval
 PRICE_DF = pd.read_csv('AAPL_Final_Trend.csv')
 MAX_LEN = len(PRICE_DF)
 
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.layout = cfg.app_layout
 
-APP_NAME="app1"
+# app specific values
+# end_P1 = 330//minutes_per_interval
+# end_P2 = 491//minutes_per_interval
+# APP_NAME="app1"
+
+
+def wsgi_factory(end_P1, end_P2, APP_NAME):
+	global app
+	app.meta_tags=[end_P1, end_P2, APP_NAME]
+	server = app.server
+	return server
 
 
 
-def persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng):
+
+def persist_to_sql(mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng):
 # CREATE TABLE results (experiment TEXT, mturkId TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, winnings NUMERIC, tradingFreq NUMERIC, confidence NUMERIC, focus NUMERIC, stateOfMind NUMERIC, regret NUMERIC, rng TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cur = conn.cursor()
     sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
-    cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5, rng))
+    cur.execute(sql, (mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5, rng))
     conn.commit()
     cur.close()
     conn.close()
@@ -63,7 +70,7 @@ def get_df():
     price_df['strtime'] = price_df.Localtime.dt.strftime("%m/%d %H:%M")
     price_df['index2'] = price_df.index//minutes_per_interval
     
-    ix_p1 = end_P1*minutes_per_interval
+    ix_p1 = app.meta_tags[0]*minutes_per_interval
     ix_p2_old = 510
     price_df.loc[ix_p1:ix_p2_old]['High'] = dist_stretcher(price_df.loc[ix_p1:ix_p2_old]['High'].copy(), volatile_price_multiplier)
 
@@ -168,14 +175,14 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
     elif wc: 
         return False, True, 'Trading paused due to high volatility. Take a break to hydrate.'
     elif screen2['display']=='block':
-        if  PRICE_DF.loc[ix]['index2'] == end_P1:#, end_P2]:
+        if  PRICE_DF.loc[ix]['index2'] == app.meta_tags[0]:#, app.meta_tags[1]]:
             if not bid_submitted1: # PAUSE FOR BID SUBMIT
                 # Disable interval timer, Enable submit button, Prompt for bid
                 return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
             else: # BID SUBMITTED. UNPAUSE
                 # Enable interval timer, Disable submit button, 
                 return False, True, 'Bid Accepted'
-        if PRICE_DF.loc[ix]['index2'] == end_P2:
+        if PRICE_DF.loc[ix]['index2'] == app.meta_tags[1]:
             if not bid_submitted2: # PAUSE FOR BID SUBMIT
                 return True, False, f"Trading resumed, enter buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
             else: # BID SUBMITTED. UNPAUSE
@@ -192,8 +199,8 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
 # WATERCOOLER
 @app.callback(Output('watercooler', 'data'), [Input("interval-component", "n_intervals")])
 def watercooler_break(interval):
-    global PRICE_DF, APP_NAME
-    if APP_NAME=="app2" and end_P1+3<interval<end_P2:
+    global PRICE_DF
+    if app.meta_tags[2]=="app2" and app.meta_tags[0]+3<interval<app.meta_tags[1]:
         return True
     else:
         return False
@@ -231,11 +238,11 @@ def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, 
             curr_stock = curr_stock + stock_qty*buysell
        
             # BID SUBMITTED TRUE
-            if interval == end_P1 and not bidsubmitted1:
+            if interval == app.meta_tags[0] and not bidsubmitted1:
                 bidsubmitted1 = True
                 x1 = stock_qty #Sql
                 cp1 = today_price #Sql
-            if interval == end_P2 and not bidsubmitted2:
+            if interval == app.meta_tags[1] and not bidsubmitted2:
                 bidsubmitted2 =True
                 x2 = stock_qty*buysell
                 cp2 = today_price if buysell>0 else cp1
@@ -254,7 +261,7 @@ def plot_prices(interval, wc):
     pre = 0
     df = PRICE_DF[['strtime', 'High', 'Low']].loc[pre:ix]
     null_df = pd.DataFrame(columns=['strtime','High','Low'])
-    null_df['strtime'] = PRICE_DF['strtime'].loc[ix:ix+3*(end_P2-end_P1)]
+    null_df['strtime'] = PRICE_DF['strtime'].loc[ix:ix+3*(app.meta_tags[1]-app.meta_tags[0])]
     df = pd.concat([df,null_df]) # pad empty data points for right margin
 
     fig={'data':[], 'layout':{}}
@@ -268,8 +275,8 @@ def plot_prices(interval, wc):
         
     trace_vline_list=[]
     
-    if interval>=end_P1:
-        row = PRICE_DF.loc[end_P1*minutes_per_interval]
+    if interval>=app.meta_tags[0]:
+        row = PRICE_DF.loc[app.meta_tags[0]*minutes_per_interval]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
@@ -278,8 +285,8 @@ def plot_prices(interval, wc):
                 y1=row['High']+5,
                 line=dict(color='Red', width=1, dash='dot')))
 
-    if interval>=end_P2:
-        row = PRICE_DF.loc[end_P2*minutes_per_interval]
+    if interval>=app.meta_tags[1]:
+        row = PRICE_DF.loc[app.meta_tags[1]*minutes_per_interval]
         trace_vline_list.append(go.layout.Shape(
                 type="line",
                 x0=row['strtime'],
@@ -321,7 +328,10 @@ def fast_forward_end(bid_submitted2):
 @app.callback([Output('input-col','style'), Output('continue-col','style'), Output('continue-button','disabled')],[Input('data-end','data')])
 def continue_to_conclusion(dataend):
     dataend = dataend or False
-    if dataend: return {'display':'none'}, {'float':'right', 'width':'40%', 'overflow':'auto'}, False
+    if dataend: 
+    	return {'display':'none'}, {'float':'right', 'width':'40%', 'overflow':'auto'}, False
+	else:
+		raise PreventUpdate
 
 
 
@@ -336,14 +346,14 @@ def continue_to_conclusion(dataend):
                State('txn-price-1','data'), State('txn-price-2','data'), State('position-store','data'),\
                State('mturk-id-input','value'), State('survey1','value'), State('survey2','value'), State('survey3','value'), \
                State('survey4','value'), State('survey5','value')])
-def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5, app_name):
+def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5):
     if not(s3 and s4 and s5 and exp_end):
         raise PreventUpdate
 
     rng = ''.join(random.choice('0123456789ABCDEF') for i in range(12))
     say_thanks = {'display':'inline-block', 'text-align':'center'}
     netwin=round(curr_pos-cfg.status0['cash'],2)
-    persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng)
+    persist_to_sql(app.meta_tags[2], mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng)
     
     win_style = {'text-align':'center'}
     win_str=""
@@ -354,10 +364,5 @@ def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5,
         win_str = f"You made a loss of ${netwin}. If you are a selected winner, we will be in touch."
         win_style['color'] = 'Red'  
 
-    return(win_str, "Thank you. You may now close this window.", win_style, f"Enter this ID exactly on MTurk to recieve your compensation: {rng}", say_thanks, True, APP_NAME)
+    return(win_str, "Thank you. You may now close this window.", win_style, f"Enter this ID exactly on MTurk to recieve your compensation: {rng}", say_thanks, True)
     
-
-
-if __name__ == "__main__":
-	print("this is main")
-	app.run_server() 
