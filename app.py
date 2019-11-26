@@ -35,18 +35,6 @@ end_P2 = 491//minutes_per_interval if 'profit' in APP_NAME else 502//minutes_per
 
 
 
-def persist_to_sql(mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng):
-# CREATE TABLE results (experiment TEXT, mturkId TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, winnings NUMERIC, tradingFreq NUMERIC, confidence NUMERIC, focus NUMERIC, stateOfMind NUMERIC, regret NUMERIC, rng TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
-	conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-	cur = conn.cursor()
-	sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
-	cur.execute(sql, (mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5, rng))
-	conn.commit()
-	cur.close()
-	conn.close()
-
-
-
 def get_df():
 	def dist_stretcher(series, multiplier, anchor=None):
 		if not anchor:
@@ -366,3 +354,13 @@ def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5)
 
 	return(win_str, "Thank you. You may now close this window.", win_style, f"Enter this ID exactly on MTurk to recieve your compensation: {rng}", say_thanks, True)
 	
+
+def persist_to_sql(app_name, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng):
+# CREATE TABLE results (experiment TEXT, mturkId TEXT, qty1 NUMERIC, price1 NUMERIC, qty2 NUMERIC, price2 NUMERIC, winnings NUMERIC, tradingFreq NUMERIC, confidence NUMERIC, focus NUMERIC, stateOfMind NUMERIC, regret NUMERIC, rng TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+	conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+	cur = conn.cursor()
+	sql = "INSERT INTO results VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,DEFAULT)"
+	cur.execute(sql, (app_name, mturk, x1, p1, x2, p2, netwin, s1, s2, s3, s4, s5, rng))
+	conn.commit()
+	cur.close()
+	conn.close()
