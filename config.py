@@ -58,8 +58,7 @@ screen1 = html.Div(id='screen1', children=[\
 
 screen_instructions = html.Div(id='screen-instr', style={'display':'none'}, children=[\
                     html.H1('Instructions'), \
-                    html.Img(src='https://i.ibb.co/7Y4181Y/preview.png'),
-                    html.Img(src='./preview.png'),
+                    html.Img(src='https://i.ibb.co/7Y4181Y/preview.png', style={'max-width':'70%'}),
                     dcc.Markdown('''
                         ### The next screen will take you to your trading interface (shown above).
                         - The interface is divided into two halves: the top half shows the stock's movement in real-time. The bottom half is your trading dashboard.
@@ -77,7 +76,7 @@ screen_instructions = html.Div(id='screen-instr', style={'display':'none'}, chil
                         - The graph is interactive. You can zoom in by clicking and dragging across the graph. Try to use this information while making your decisions. 
                       '''),
                     html.Br(),html.Br(),html.Br(),\
-                    html.Button("I'm ready!", id='im-ready', style={'display':'inline-block','margin':'auto', 'text-align':'center'})
+                    html.Button("I'm ready!", id='im-ready', style={'display':'block','margin':'auto'})
                    ])
 
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
