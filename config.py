@@ -126,20 +126,20 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
                     html.Table([
                             html.Tr([html.Th(style={'display':'block'}, children=['Available Cash']), \
                                      html.Th(style={'display':'block'}, children=['Stocks Held']), \
-                                     html.Th(style={'display':'none'}, children=['Net Worth']), \
+                                     html.Th(style={'display':'block'}, children=['Net Worth']), \
                                      html.Th(style={'display':'none'}, children=['Today is'])
                                      ],
                                  style={'float':'left', 'display':'block'}),
                                      
                             html.Tr([html.Td(style={'display':'block', 'color':'green'}, id='cash-str', children="${}".format(status0['cash'])), \
                                      html.Td(style={'display':'block'}, id='stock-str', children="0"), \
-                                     html.Td(style={'display':'none'}, id='p&l-str', children="$0"), \
+                                     html.Td(style={'display':'block'}, id='position-str', children="$0"), \
                                      html.Td(style={'display':'none'}, id='today-str', children="09/16 09:30")],
                                  style={'float':'left', 'display':'block'}),
                         ])]),
                                      
                 html.Div(id='calendar-col', style={'float':'left', 'width':'25%','overflow':'auto'}, children=[
-                        html.H3(id='position-str', children="$0"),
+                        html.H3(id='p&l-str', children="$0"),
                         html.H4(id='today_price-str', children="Current Price: $200"),
                         ])])])
                             

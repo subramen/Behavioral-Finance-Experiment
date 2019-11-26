@@ -154,7 +154,7 @@ def update_str(price, date, wc, cash, stock, pos, pnl):
 	pos = pos or 0
 	pnlstyle_dict = {'display':'block', 'color':'red'} if pnl<0 else {'display':'block', 'color':'green'}
 	posstyle_dict = {'display':'block', 'color':'red'} if pos<(cfg.status0['cash']+PRICE_DF.iloc[0]['High']*cfg.status0['stock']) else {'display':'block', 'color':'green'}
-	return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Current P&L: ${pnl}", pnlstyle_dict, posstyle_dict
+	return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Current Profit: ${pnl}", pnlstyle_dict, posstyle_dict
 
 
 @app.callback(Output("today-str", "children"), [Input("today_dt-store","data")])
