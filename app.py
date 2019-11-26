@@ -101,7 +101,7 @@ def start_exp(intro_click, ready_click, continue_click, mturk_id, surv1, surv2):
 	
 	elif intro_click:
 		d_intro = {'display':'none'}
-		d_si = {'display':'block'}
+		d_si = {'display':'block-inline'}
 		d_dash = {'display':'none'}
 		d_end = {'display':'none'}
 		return [d_intro, d_si, d_dash, d_end]
