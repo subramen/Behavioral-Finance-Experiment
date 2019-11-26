@@ -153,7 +153,7 @@ def update_str(price, date, wc, cash, stock, pos, pnl):
 	pnl = pnl or 0
 	pos = pos or 0
 	pnlstyle_dict = {'display':'block', 'color':'red'} if pnl<0 else {'display':'block', 'color':'green'}
-	posstyle_dict = {'display':'block', 'color':'red'} if pos<cfg.status0['cash'] else {'display':'block', 'color':'green'}
+	posstyle_dict = {'display':'block', 'color':'red'} if pos<(cfg.status0['cash']+PRICE_DF.iloc[0]['High']*cfg.status0['stock']) else {'display':'block', 'color':'green'}
 	return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Current P&L: ${pnl}", pnlstyle_dict, posstyle_dict
 
 
@@ -178,7 +178,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
 	if ix>MAX_LEN:
 		return True, True, 'Thanks'
 	elif wc: 
-		return False, True, 'Trading paused due to high volatility. Take a break to hydrate.'
+		return False, True, 'Trading paused. Take a break to hydrate.'
 	elif screen2['display']=='block':
 		if  PRICE_DF.loc[ix]['index2'] == end_P1:#, end_P2]:
 			if not bid_submitted1: # PAUSE FOR BID SUBMIT

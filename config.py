@@ -10,7 +10,7 @@ import dash_html_components as html
 
 INTERVAL_LENGTH = 1500
 
-status0 = {'cash':2500, 'stock':0, 'position':0} #defaults
+status0 = {'cash':2500, 'stock':10, 'position':0} #defaults
 app_color = {"graph_bg": "#082255", "graph_line": "#007ACE"} 
 
 
@@ -37,9 +37,9 @@ ans5 = ['No', 'Only Trade 1', 'Only Trade 2', 'Both Trades']
 screen1 = html.Div(id='screen1', children=[\
             html.Div(id='s1-toprow', style={'text-align':'center'}, children=[html.H1('Welcome!'), \
                    html.Br(),
-                   html.H4("In this task, you have $2,500 to invest in a large tech company."),
-                   html.H4("You will have time to track the stock's movements. Make trades to make money!"),\
-                   html.H4("Selected winners are eligible for Amazon gift cards based on their winnings. Play smart!", style={'color':'RoyalBlue'}),\
+                   html.H4("In this task, you can invest in the stock of a large tech company."),
+                   html.H4("You start with 10 shares and $2,500 in cash. Make trades to maximize your net worth/"),\
+                   html.H4("Every 100th MTurk ID will receive their winnings in their MTurk account. Play smart!", style={'color':'RoyalBlue'}),\
                    html.H5('Do not click Back or Refresh!', style={'color':'Red'}),
                    html.Br(),html.Br(),]),
 
@@ -126,19 +126,20 @@ screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
                     html.Table([
                             html.Tr([html.Th(style={'display':'block'}, children=['Available Cash']), \
                                      html.Th(style={'display':'block'}, children=['Stocks Held']), \
-                                     html.Th(style={'display':'block'}, children=['Net Worth']), \
-                                     html.Th(style={'display':'block'}, children=['Today is'])],
+                                     html.Th(style={'display':'none'}, children=['Net Worth']), \
+                                     html.Th(style={'display':'none'}, children=['Today is'])
+                                     ],
                                  style={'float':'left', 'display':'block'}),
                                      
                             html.Tr([html.Td(style={'display':'block', 'color':'green'}, id='cash-str', children="${}".format(status0['cash'])), \
                                      html.Td(style={'display':'block'}, id='stock-str', children="0"), \
-                                     html.Td(style={'display':'block'}, id='position-str', children="$0"), \
-                                     html.Td(style={'display':'block'}, id='today-str', children="09/16 09:30")],
+                                     html.Td(style={'display':'none'}, id='p&l-str', children="$0"), \
+                                     html.Td(style={'display':'none'}, id='today-str', children="09/16 09:30")],
                                  style={'float':'left', 'display':'block'}),
                         ])]),
                                      
                 html.Div(id='calendar-col', style={'float':'left', 'width':'25%','overflow':'auto'}, children=[
-                        html.H3(id='p&l-str', children="$0"),
+                        html.H3(id='position-str', children="$0"),
                         html.H4(id='today_price-str', children="Current Price: $200"),
                         ])])])
                             
