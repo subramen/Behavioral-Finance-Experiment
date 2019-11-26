@@ -77,7 +77,7 @@ def get_df():
 
 
 # SCREEN CONTROL
-@app.callback([Output('screen1','style'), Output('screen2','style'), Output('screen-instr','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
+@app.callback([Output('screen1','style'), Output('screen-instr','style'), Output('screen2','style'), Output('screen3', 'style')],# Output('mturk-id-store','data')], \
 			   [Input('user-begin', 'n_clicks'), Input('im-ready','n_clicks'), Input('continue-button', 'n_clicks')],
 			   [State('mturk-id-input','value'), State('survey1','value'), State('survey2','value')])
 def start_exp(intro_click, ready_click, continue_click, mturk_id, surv1, surv2):
