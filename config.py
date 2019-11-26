@@ -59,6 +59,7 @@ screen1 = html.Div(id='screen1', children=[\
 screen_instructions = html.Div(id='screen-instr', style={'display':'none'}, children=[\
                     html.H1('Instructions'), \
                     html.Img(src='https://i.ibb.co/7Y4181Y/preview.png'),
+                    html.Img(src='./preview.png'),
                     dcc.Markdown('''
                         ### The next screen will take you to your trading interface (shown above).
                         - The interface is divided into two halves: the top half shows the stock's movement in real-time. The bottom half is your trading dashboard.
