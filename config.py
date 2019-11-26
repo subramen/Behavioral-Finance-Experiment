@@ -56,29 +56,28 @@ screen1 = html.Div(id='screen1', children=[\
                    html.Button('Begin', id='user-begin', style={'display':'block','margin':'auto'})])
             ])
 
-screen_instructions = html.Div(id='screen-instr', style={'display':'none'}, children=[
+screen_instructions = html.Div(id='screen-instr', style={'display':'none'}, children=[\
                     html.H1('Instructions'), \
-                    ### IMAGE ####
+                    html.Img(src='preview.png'),
                     dcc.Markdown('''
-                        ###The next screen will take you to your trading interface (shown below).
-                        ![Trading Interface](preview.png)
-                        - The interface is divided into two halves: the top half shows the stock's movement in real-time. The bottom half is your trading dashboard.\n
+                        ### The next screen will take you to your trading interface (shown above).
+                        - The interface is divided into two halves: the top half shows the stock's movement in real-time. The bottom half is your trading dashboard.
                         - The stock price will automatically update every 3 seconds. The bottom left corner shows you the current price and your profit/loss.
                         - The bottom center is your dashboard. Here, you can track
                           - how much cash you have available
                           - how many stocks you own
                           - your current net worth (aggregate value of cash and stocks you own)
-                        - The bottom right is your control panel. You can use this to make trades.\n
+                        - The bottom right is your control panel. You can use this to make trades.
                         - For the first 5 minutes, observe the stock's movements. You can use this time to formulate a trading strategy. 
                         - You will then be prompted to make your first trade. Since you don't have any stock to sell, you can choose to buy 0 or more stocks. Only valid bids will be accepted.
                         - For the next 3 minutes you can track how the stock market is influencing your net worth. You may not place a bid at this time.
                         - Finally, you will be prompted to make your second and final trade. Based on your knowledge of the stock, place a trade that maximizes your net worth. Remember, this is what will decide if you're a winner.
-                        - You will receive a 12-digit code in the final screen. You must enter this code in MTurk as confirmation of completion.\n
+                        - You will receive a 12-digit code in the final screen. You must enter this code in MTurk as confirmation of completion.
                         - The graph is interactive. You can zoom in by clicking and dragging across the graph. Try to use this information while making your decisions. 
-                    '''),
-                    html.Br(),html.Br(),html.Br(),
+                      '''),
+                    html.Br(),html.Br(),html.Br(),\
                     html.Button("I'm ready!", id='im-ready', style={'display':'block-inline','margin':'auto', 'text-align':'center'})
-                       ])
+                   ])
 
 screen2 = html.Div(id='screen2',style={'display':'none'}, children = [
         # TITLE
