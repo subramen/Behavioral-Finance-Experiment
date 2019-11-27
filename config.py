@@ -38,7 +38,7 @@ screen1 = html.Div(id='screen1', children=[\
             html.Div(id='s1-toprow', style={'text-align':'center'}, children=[html.H1('Welcome!'), \
                    html.Br(),
                    html.H4("In this task, you can invest in the stock of a large tech company."),
-                   html.H4("You start with 10 shares and $2,500 in cash. Make trades to maximize your net worth/"),\
+                   html.H4("You start with 10 shares and $2,500 in cash. Make trades to maximize your net worth."),\
                    html.H4("Every 100th MTurk ID will receive their winnings in their MTurk account. Play smart!", style={'color':'RoyalBlue'}),\
                    html.H5('Do not click Back or Refresh!', style={'color':'Red'}),
                    html.Br(),html.Br(),]),
