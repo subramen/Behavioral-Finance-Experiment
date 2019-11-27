@@ -25,6 +25,7 @@ server=app.server
 WINDOW_SIZE = 500
 minutes_per_interval = 2
 PRICE_DF = pd.read_csv('AAPL_Final_Trend.csv')
+CP0 = PRICE_DF.head(1)['High']
 MAX_LEN = len(PRICE_DF)
 
 
@@ -123,7 +124,8 @@ def update_currents(interval, stock, x1, x2, cp1, cp2, dataend, cash):
 	cp2 = cp2 or 0
 	x1 = x1 or 0
 	x2 = x2 or 0
-	curr_pnl = round((curr_price-cp1)*x1+(curr_price-cp2)*x2, 2)
+	# curr_pnl = round((curr_price-cp1)*x1+(curr_price-cp2)*x2+(curr_price-CP0), 2)
+	curr_pnl = round(curr_pos - (cfg.status0['cash']+cfg.status0['stock']*CP0), 2)
 	return curr_price, curr_dt, curr_pos, curr_pnl, dataend
 
 
@@ -142,7 +144,7 @@ def update_str(price, date, wc, cash, stock, pos, pnl):
 	pos = pos or 0
 	pnlstyle_dict = {'display':'block', 'color':'red'} if pnl<0 else {'display':'block', 'color':'green'}
 	posstyle_dict = {'display':'block', 'color':'red'} if pos<(cfg.status0['cash']+PRICE_DF.iloc[0]['High']*cfg.status0['stock']) else {'display':'block', 'color':'green'}
-	return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Current Profit: ${pnl}", pnlstyle_dict, posstyle_dict
+	return f"Current Price: ${price}", f"${cash}", f"{stock}", f"${pos}", f"Unrealized P&L: ${pnl}", pnlstyle_dict, posstyle_dict
 
 
 @app.callback(Output("today-str", "children"), [Input("today_dt-store","data")])
@@ -171,7 +173,7 @@ def toggle_interval_for_bid(interval, bid_submitted1, bid_submitted2, screen2, d
 		if  PRICE_DF.loc[ix]['index2'] == end_P1:#, end_P2]:
 			if not bid_submitted1: # PAUSE FOR BID SUBMIT
 				# Disable interval timer, Enable submit button, Prompt for bid
-				return True, False, f"Enter number of stocks to buy. Allowed values between 0 to {math.floor(cash/price)}"
+				return True, False, f"Enter number of stocks to buy/sell. Max Buy: {math.floor(cash/price)}. Max Sell: {stock}"
 			else: # BID SUBMITTED. UNPAUSE
 				# Enable interval timer, Disable submit button, 
 				return False, True, 'Bid Accepted'
@@ -214,7 +216,7 @@ def watercooler_break(interval):
 			   State('txn-price-1','data'), State('txn-price-2','data')]
 		  )
 def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, interval, bidsubmitted1, bidsubmitted2, x1, x2, cp1, cp2):
-	global PRICE_DF
+	global PRICE_DF, CP0
 	if not (stock_qty and buysell):     # Empty input
 		raise PreventUpdate
 	else:
@@ -231,8 +233,8 @@ def get_trade(n_clicks, stock_qty, buysell, curr_cash, curr_stock, today_price, 
 			# BID SUBMITTED TRUE
 			if interval == end_P1 and not bidsubmitted1:
 				bidsubmitted1 = True
-				x1 = stock_qty #Sql
-				cp1 = today_price #Sql
+				x1 = stock_qty*buysell 
+				cp1 = today_price if buysell>0 else CP0
 			if interval == end_P2 and not bidsubmitted2:
 				bidsubmitted2 =True
 				x2 = stock_qty*buysell
