@@ -25,7 +25,7 @@ server=app.server
 WINDOW_SIZE = 500
 minutes_per_interval = 2
 PRICE_DF = pd.read_csv('AAPL_Final_Trend.csv')
-CP0 = PRICE_DF.head(1)['High']
+CP0 = 217.76 # PRICE_DF.head(1)['High']
 MAX_LEN = len(PRICE_DF)
 
 
