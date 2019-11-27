@@ -342,7 +342,7 @@ def end_experiment(exp_end, x1, x2, p1, p2, curr_pos, mturk, s1, s2, s3, s4, s5)
 
 	rng = ''.join(random.choice('0123456789ABCDEF') for i in range(12))
 	say_thanks = {'display':'inline-block', 'text-align':'center'}
-	netwin=round(curr_pos-cfg.status0['cash'],2)
+	netwin=round(curr_pos-cfg.status0['cash']-cfg.status0['stock']*CP0,2)
 	persist_to_sql(APP_NAME, mturk, x1, x2, p1, p2, netwin, s1, s2, s3, s4, s5, rng)
 	
 	win_style = {'text-align':'center'}
