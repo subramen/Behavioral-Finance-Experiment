@@ -44,7 +44,7 @@
   border-right: 10px solid transparent;
   border-bottom: 20px solid green;
   justify-self: center;
-  align-self: center;
+  /* align-self: center; */
 }
 
 #dn-triangle {
