@@ -37,6 +37,14 @@
   }
 }
 
+
+.Ticker {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr; 
+  align-items: center;
+}
+
+
 #up-triangle {
   width: 0;
   height: 0;
@@ -54,5 +62,80 @@
   border-right: 10px solid transparent;
   border-top: 20px solid red;
   justify-self: center;
-  align-self: center;
+  /* align-self: center; */
+}
+
+
+.inputBox {
+  font-size: 16px;
+}
+
+
+.btn {
+  font-size: 16px;
+  border: 2px solid black;
+  padding: 15px 32px;
+  margin: 4px 2px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+
+  background-color: white;
+  color: black;
+}
+
+.buy{
+  border-color: #4CAF50;
+  color: green;
+}
+.buy:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+.buy_active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+
+.sell {
+  border-color: #f44336;
+  color: red
+}
+.sell:hover {
+  background: #f44336;
+  color: white;
+}
+.sell_active {
+  background: #f44336;
+  color: white;
+}
+
+
+.sbmt {
+  border-color: #2196F3;
+  color: dodgerblue
+}
+.sbmt:hover {
+  background: #2196F3;
+  color: white;
+}
+
+
+
+  table.greenTable {
+  font-family: Georgia, serif;
+  border: 6px solid #24943A;
+  background-color: #D4EED1;
+  width: 100%;
+  text-align: center;
+}
+table.greenTable td, table.greenTable th {
+  border: 1px solid #24943A;
+  padding: 3px 2px;
+  font-size: 22px;
+}
+table.greenTable tbody td {
+  font-size: 19px;
 }
