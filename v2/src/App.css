@@ -1,141 +1,147 @@
 .App {
+  font-family: 'Lato', sans-serif;
   text-align: center;
+  /* background-color: rgb(235, 235, 235) */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+
+.modal-backdrop {
+  display:grid;
+  position: fixed;
+  /* z-index: 1; */
+  width: 100%;
+  height: 100%;
+  background-color: rgba(210, 191, 191, 1);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.modal-content {
+  display: grid;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+
+.market-screen{
+  padding-top: 50px;
+  display: grid; 
+  grid-template-columns: 3fr 1fr;
+  column-gap: 20;
+  row-gap: 20;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 
 .Ticker {
-  display: grid;
+  display: inline-flex;
   grid-template-columns: 2fr 1fr 2fr; 
   align-items: center;
 }
 
-
-#up-triangle {
+.triangle {
   width: 0;
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-bottom: 20px solid green;
   justify-self: center;
-  /* align-self: center; */
 }
 
-#dn-triangle {
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
+.up {
+  border-bottom: 20px solid green;
+}
+.down {
   border-top: 20px solid red;
-  justify-self: center;
-  /* align-self: center; */
 }
 
 
 .inputBox {
-  font-size: 16px;
+  font-size: 20px;
+  margin-bottom: 5px;
 }
 
+.inputBox input {
+  width: 15%;
+  margin-left: 5px;
+  padding: 5px 8px;
+  text-align: center;
+  font-size: 20px;
+}
 
 .btn {
-  font-size: 16px;
-  border: 2px solid black;
-  padding: 15px 32px;
-  margin: 4px 2px;
-  text-align: center;
-  text-decoration: none;
   display: inline-block;
+  border: 1px solid white;
+  border-radius: 5px;
+  padding: 8px 10px;
+  margin: 9px 10px;
   cursor: pointer;
-
-  background-color: white;
-  color: black;
+  box-shadow: 2px 1px 2px #999;
+  
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
 }
 
-.buy{
-  border-color: #4CAF50;
-  color: green;
+.buy {
+  color: green
 }
 .buy:hover {
-  background-color: #4CAF50;
-  color: white;
+  border: 1px solid rgba(152, 201, 152, 0.671)
 }
 .buy_active {
-  background-color: #4CAF50;
-  color: white;
+  background: rgba(152, 201, 152, 0.671);
+  color: green;
+  box-shadow: 0px 0px #999;
 }
 
-
 .sell {
-  border-color: #f44336;
   color: red
 }
 .sell:hover {
-  background: #f44336;
-  color: white;
+  border: 1px solid rgba(245, 175, 170, 0.671)
 }
 .sell_active {
-  background: #f44336;
-  color: white;
+  background: rgb(245, 175, 170, 0.671);
+  color: red;
+  box-shadow: 0px 0px #999;
 }
 
-
-.sbmt {
-  border-color: #2196F3;
-  color: dodgerblue
-}
-.sbmt:hover {
-  background: #2196F3;
-  color: white;
+.submit:enabled {
+  color: rgb(46, 125, 243);
 }
 
 
 
-  table.greenTable {
-  font-family: Georgia, serif;
-  border: 6px solid #24943A;
-  background-color: #D4EED1;
-  width: 100%;
+table.grayTable {
+  border-radius: 10px;
+  background-color: rgb(240, 240, 240);
+  width: 90%;
+  justify-self: center;
   text-align: center;
+  padding: 2px 8px;
 }
-table.greenTable td, table.greenTable th {
-  border: 1px solid #24943A;
+table.grayTable td, table.grayTable th {
   padding: 3px 2px;
   font-size: 22px;
+  border-collapse: collapse;
 }
-table.greenTable tbody td {
+table.grayTable th {
+  text-align: left;
+}
+
+table.grayTable tbody td {
   font-size: 19px;
+}
+
+.popupContainer {
+  text-align: center;
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  zoom: 1.5;
+}
+
+
+.panel {
+  border: 2px solid black;
+  border-radius: 10px;
+  display: flex;
+  justify-self: center;
+  margin: 10%;
 }
