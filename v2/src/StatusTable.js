@@ -40,6 +40,7 @@ export default class StatusTable extends React.Component {
     
     render() {
         let {cash, stocks} = this.props;
+        cash = Math.round(cash*100)/100;
         return (
             <table className="grayTable">
                 <tbody>
