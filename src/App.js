@@ -135,7 +135,7 @@ function FillerOrScreen() {
     <div>
       <h1>WATERCOOLER MOMENT</h1>
       <h2>The participant must not view the market during this phase (which lasts until it's time to make the next trade)</h2>
-      <h2>How should we interact with the user on this screen? In the previous version, the screen simply froze, and resumed when the watercooler moment is done.</h2>
+      <h2>How should we interact with the user on this screen? In the previous version, the market simply froze, and resumed when the watercooler moment is done.</h2>
       <br />
       <h3>For the control group, the experiment continues undisturbed.</h3>
     </div>
