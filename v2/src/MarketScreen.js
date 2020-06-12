@@ -20,7 +20,6 @@ export default function MarketScreen(props) {
   }
   
   function PriceTracker(props) {
-    console.log('should ticker update? '+!props.pausedForTrade);
     return(
       <div style={{display:"grid", gridTemplateRows: "1fr 7fr 2fr"}}>
         <TitleBar pausedForTrade={props.pausedForTrade} price={props.price}/>

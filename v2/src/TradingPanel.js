@@ -46,6 +46,9 @@ export default class TradingPanel extends React.Component {
       const nextStock = stocks - parseInt(this.state.qty);
       processTrade(nextCash, nextStock);
     }
+    else if (!this.state.buy && !this.state.sell && this.state.qty === 0){
+      processTrade(cash, stocks);
+    }
     else {
       alert('Invalid Transaction!');
     }
