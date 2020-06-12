@@ -25,6 +25,7 @@ class App extends React.Component {
     this.handleTimedEvents = this.handleTimedEvents.bind(this);
     this.unpauseTrading = this.unpauseTrading.bind(this);
     this.setModal = this.setModal.bind(this);
+    this.closeModal = this.closeModal.bind(this);
 
     this.one = this.one.bind(this);
     this.five = this.five.bind(this);
@@ -105,6 +106,13 @@ class App extends React.Component {
     );
   }
 
+  closeModal() {
+    if (this.state.nowIndex > this.pauseIndices[1]) {
+      this.setModal(false);
+      this.modalChild = null;
+    }
+  }
+
   render() {  
     var price = Math.round((this.prices[this.state.nowIndex] + Number.EPSILON) * 100) / 100;
     var timestamp = this.timestamps[this.state.nowIndex]
@@ -112,7 +120,7 @@ class App extends React.Component {
     return (
       <div className="App">
         <div className="App-container" >
-          <Modal show={this.state.showModal} onClose={()=>this.setModal(false)} children={this.modalChild}/>
+          <Modal show={this.state.showModal} onClose={this.closeModal} children={this.modalChild}/>
           <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused} resume={this.unpauseTrading}/>
           <ExperimentSpeed one={this.one} five={this.five} ten={this.ten}/>
         </div>
@@ -126,7 +134,10 @@ function FillerOrScreen() {
   return (
     <div>
       <h1>WATERCOOLER MOMENT</h1>
-      <h2>How should we interact with the user on this screen?</h2>
+      <h2>The participant must not view the market during this phase (which lasts until it's time to make the next trade)</h2>
+      <h2>How should we interact with the user on this screen? In the previous version, the screen simply froze, and resumed when the watercooler moment is done.</h2>
+      <br />
+      <h3>For the control group, the experiment continues undisturbed.</h3>
     </div>
   );
 }
