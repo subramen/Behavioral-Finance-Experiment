@@ -3,7 +3,8 @@ import './App.css';
 
 
 export default function Ticker(props) {
-    const {bold, curr, diff} = props;
+    const {type, curr, diff} = props;
+    const pc = Math.round((diff/curr*100 + Number.EPSILON)*100/100);
     const color = (diff < 0 ? 'red' : 'green')
 
 
@@ -23,11 +24,20 @@ export default function Ticker(props) {
         </span>
     );
 
-    if (bold) {
+    const pcOut = (
+        <span className="Ticker" style={{color:color}}>
+            <span className={"triangle " + (diff < 0 ? "down" : "up")}/> 
+            <span style={{fontSize:"1.5em", fontWeight:"bold", justifySelf: "start"}}>{pc}%</span>
+        </span>
+    );
+
+    if (type === 'bold') {
         return boldOut;
     }
-    else {
+    else if (type === 'lite') {
         return liteOut;
     }
+    else if (type === 'percent')
+    return pcOut;
   }
   

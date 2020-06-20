@@ -133,9 +133,9 @@ class App extends React.Component {
 function FillerOrScreen() {
   return (
     <div>
-      <h1>WATERCOOLER MOMENT</h1>
-      <h2>The participant must not view the market during this phase (which lasts until it's time to make the next trade)</h2>
-      <h2>How should we interact with the user on this screen? In the previous version, the market simply froze, and resumed when the watercooler moment is done.</h2>
+      <h1>Water Break - Take a 5 minute break from the market</h1>
+      <h2>Hydrate, check your notifications or simply close your eyes and focus on your breath.</h2>
+      <h2>The market will resume after 5 minutes, so be sure to be back!</h2>
       <br />
       <h3>For the control group, the experiment continues undisturbed.</h3>
     </div>
