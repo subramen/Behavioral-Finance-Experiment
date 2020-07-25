@@ -1,6 +1,5 @@
 import React from 'react';
 import './App.css';
-import Button from '@material-ui/core/Button';
 
 export default class TradingPanel extends React.Component {
   constructor(props) {
@@ -71,7 +70,7 @@ export default class TradingPanel extends React.Component {
                   sell={this.state.sell}
                 />
               </div>
-              {/* <TxnStatus buy={this.state.buy} sell={this.state.sell} qty={this.state.qty} />     */}
+              <TxnStatus show={this.props.pausedForTrade} buy={this.state.buy} sell={this.state.sell} qty={this.state.qty} />    
               <button className="btn submit" disabled={!this.props.pausedForTrade} onClick={this.handleSubmit}>SUBMIT</button>
             </div>
         </fieldset>
@@ -103,14 +102,19 @@ class BuySellB extends React.Component {
 }
 
 function TxnStatus(props) {
-  return(
-    <div className="txnStatus">{
-      "Your trade: " + 
-      (!props.buy && !props.sell ? 
-        'HOLD' : 
-        (props.sell ? 
-          'SELL '+ props.qty +' stocks' : 
-          'BUY '+ props.qty +' stocks'))
-    }</div>
-  )
+  if (props.show) {
+    return (
+      <div className="txnStatus">{
+        "Your trade: " + 
+        (!props.buy && !props.sell ? 
+          'HOLD' : 
+          (props.sell ? 
+            'SELL '+ props.qty +' stocks' : 
+            'BUY '+ props.qty +' stocks'))
+      }</div>
+    );
+  }
+  else {
+    return null;
+  }
 }

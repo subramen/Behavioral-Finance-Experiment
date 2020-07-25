@@ -16,7 +16,7 @@ export default class StatusTable extends React.Component {
         var prevPF = Math.round((this.props.stocks * this.prevPrice)*100)/100;
 
         var priceDiff = (this.prevPrice ? Math.round((currPF - prevPF + Number.EPSILON) * 100) / 100 : 0);
-        return <Ticker bold={false} curr={currPF} diff={priceDiff}/>;
+        return <Ticker type='lite' curr={currPF} diff={priceDiff}/>;
       }
 
     componentDidMount() {

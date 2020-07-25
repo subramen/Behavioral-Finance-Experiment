@@ -4,6 +4,7 @@ import TitleBar from './TitleBar';
 import StockPlot from './StockPlot';
 import TradingPanel from './TradingPanel';
 import StatusTable from './StatusTable';
+import Ticker from './Ticker'
 
 export default function MarketScreen(props) {
     if (props.hide) {
@@ -19,14 +20,59 @@ export default function MarketScreen(props) {
     }
   }
   
-  function PriceTracker(props) {
-    return(
-      <div style={{display:"grid", gridTemplateRows: "1fr 7fr 2fr"}}>
-        <TitleBar pausedForTrade={props.pausedForTrade} price={props.price}/>
-        <StockPlot price={props.price} timestamp={props.timestamp}/>
+
+class PriceTracker extends React.Component {
+  constructor(props) {
+    super(props);
+    this.prevPrice = null;
+    this.getTicker = this.getTicker.bind(this)
+  }
+
+  getTicker() {
+    var currPrice = this.props.price;
+    var priceDiff = (this.prevPrice ? Math.round((this.props.price - this.prevPrice + Number.EPSILON) * 100) / 100 : 0);
+    
+    return [
+    <Ticker type='bold' curr={currPrice} diff={priceDiff}/>, 
+    <Ticker type='percent' curr={currPrice} diff={priceDiff}/>
+    ];
+  }
+
+  componentDidMount() {
+    if (this.prevPrice !== this.props.price) {
+      this.prevPrice = this.props.price;
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.prevPrice !== this.props.price) {
+      this.prevPrice = this.props.price;
+    }
+  }
+
+  shouldComponentUpdate(nextProps, nextState){
+    if (this.props.price === nextProps.price) {
+      return false;
+    }
+    return true;
+  }
+
+  render() {
+    let [dollarTick, percentTick] = this.getTicker()
+    return (
+      <div className="priceTracker">
+        <TitleBar dollarTick={dollarTick}/>
+        <span style={{display:"grid"}}>
+          <StockPlot price={this.props.price} timestamp={this.props.timestamp}/>
+          <span className='deltaOverlay'>{percentTick}</span>
+        </span>
+
       </div>
     );
   }
+}
+
+
   
   
   class TradeCenter extends React.Component{  
