@@ -2,8 +2,7 @@ import React from 'react';
 import './App.css';
 import MarketScreen from './MarketScreen';
 import Modal from './Modal';
-import data from './data/data.json'
-
+import data from './data/data.json';
 
 
 class App extends React.Component {
@@ -12,7 +11,7 @@ class App extends React.Component {
     this.state = {
       nowIndex: 0,
       marketPaused: false,
-      showModal: false
+      showModal: false,
     };
 
     this.WATERCOOLER = true;
@@ -20,19 +19,19 @@ class App extends React.Component {
     // CHOOSE A RANDOM STONK
     const stonks = data.stonks; // list
     const ix = Math.round(Math.random()*(stonks.length-1));
-    this.randomStonk = stonks[ix]
+    this.randomStonk = stonks[ix];
 
     // // RANDOM SAMPLE THE STONK
     const N = this.randomStonk.timestamps.length;
-    const SAMPLING_RATE = 0.3
+    const SAMPLING_RATE = 0.3;
     const sample_size = Math.floor(N*SAMPLING_RATE);
-    const sample_start = Math.round(Math.random()*(N-sample_size)); //rand(0, sample_size)
+    const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, sample_size)
     const sample_end = sample_start + sample_size;
 
 
     this.timestamps = this.randomStonk.timestamps.slice(sample_start, sample_end);
     this.prices = this.randomStonk.prices.slice(sample_start, sample_end);
-    this.pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)]
+    this.pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
 
     this.modalChild = null;
 
@@ -49,8 +48,8 @@ class App extends React.Component {
 
   componentDidMount() {
     this.timerID = setInterval(
-      () => this.incrementIndex(),
-      1000
+        () => this.incrementIndex(),
+        1000,
     );
   }
 
@@ -58,7 +57,7 @@ class App extends React.Component {
     // increment index only when trading is inactive
     if (!this.state.marketPaused) {
       this.setState(
-        state => ({nowIndex: state.nowIndex + 1})
+          (state) => ({nowIndex: state.nowIndex + 1}),
       );
     }
     this.handleTimedEvents();
@@ -66,7 +65,7 @@ class App extends React.Component {
 
   handleTimedEvents() {
     if (this.pauseIndices.includes(this.state.nowIndex)) {
-      this.setState({marketPaused: true})
+      this.setState({marketPaused: true});
     }
 
     if (this.WATERCOOLER && this.state.nowIndex > this.pauseIndices[0] && this.state.nowIndex < this.pauseIndices[1]) {
@@ -79,7 +78,7 @@ class App extends React.Component {
       this.modalChild = null;
     }
 
-    //conclude experiment
+    // conclude experiment
     if (this.state.nowIndex === this.timestamps.length) {
       console.log('hit2');
       this.setModal(true);
@@ -90,7 +89,7 @@ class App extends React.Component {
   }
 
   unpauseTrading() {
-    this.setState({marketPaused: false})
+    this.setState({marketPaused: false});
   }
 
   setModal(flag) {
@@ -100,24 +99,24 @@ class App extends React.Component {
   one() {
     clearInterval(this.timerID);
     this.timerID = setInterval(
-      () => this.incrementIndex(),
-      1000
+        () => this.incrementIndex(),
+        1000,
     );
   }
 
   five() {
     clearInterval(this.timerID);
     this.timerID = setInterval(
-      () => this.incrementIndex(),
-      200
+        () => this.incrementIndex(),
+        200,
     );
   }
 
   ten() {
     clearInterval(this.timerID);
     this.timerID = setInterval(
-      () => this.incrementIndex(),
-      100
+        () => this.incrementIndex(),
+        100,
     );
   }
 
@@ -129,8 +128,8 @@ class App extends React.Component {
   }
 
   render() {
-    var price = Math.round((this.prices[this.state.nowIndex] + Number.EPSILON) * 100) / 100;
-    var timestamp = this.timestamps[this.state.nowIndex]
+    const price = Math.round((this.prices[this.state.nowIndex] + Number.EPSILON) * 100) / 100;
+    const timestamp = this.timestamps[this.state.nowIndex];
 
     return (
       <div className="App">
@@ -173,30 +172,14 @@ function Conclude() {
 class ExperimentSpeed extends React.Component {
   render() {
     return (
-     <div style={{marginTop:"20px"}}>
-       <button className="btn" onClick={this.props.one}>1x</button>
-       <button className="btn" onClick={this.props.five}>5x</button>
-       <button className="btn" onClick={this.props.ten}>10x</button>
-     </div>
-   );
- }
+      <div style={{marginTop: '20px'}}>
+        <button className="btn" onClick={this.props.one}>1x</button>
+        <button className="btn" onClick={this.props.five}>5x</button>
+        <button className="btn" onClick={this.props.ten}>10x</button>
+      </div>
+    );
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 export default App;

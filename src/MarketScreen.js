@@ -4,37 +4,36 @@ import TitleBar from './TitleBar';
 import StockPlot from './StockPlot';
 import TradingPanel from './TradingPanel';
 import StatusTable from './StatusTable';
-import Ticker from './Ticker'
+import Ticker from './Ticker';
 
 export default function MarketScreen(props) {
-    if (props.hide) {
-      return null;
-    }
-    else {
-      return (
-        <div className="market-screen">
-          <PriceTracker pausedForTrade={props.pausedForTrade} price={props.price} timestamp={props.timestamp} />
-          <TradeCenter pausedForTrade={props.pausedForTrade} price={props.price} resume={props.resume}/>
-        </div>
-      );  
-    }
+  if (props.hide) {
+    return null;
+  } else {
+    return (
+      <div className="market-screen">
+        <PriceTracker pausedForTrade={props.pausedForTrade} price={props.price} timestamp={props.timestamp} />
+        <TradeCenter pausedForTrade={props.pausedForTrade} price={props.price} resume={props.resume}/>
+      </div>
+    );
   }
-  
+}
+
 
 class PriceTracker extends React.Component {
   constructor(props) {
     super(props);
     this.prevPrice = null;
-    this.getTicker = this.getTicker.bind(this)
+    this.getTicker = this.getTicker.bind(this);
   }
 
   getTicker() {
-    var currPrice = this.props.price;
-    var priceDiff = (this.prevPrice ? Math.round((this.props.price - this.prevPrice + Number.EPSILON) * 100) / 100 : 0);
-    
+    const currPrice = this.props.price;
+    const priceDiff = (this.prevPrice ? Math.round((this.props.price - this.prevPrice + Number.EPSILON) * 100) / 100 : 0);
+
     return [
-    <Ticker type='bold' curr={currPrice} diff={priceDiff}/>, 
-    <Ticker type='percent' curr={currPrice} diff={priceDiff}/>
+      <Ticker type='bold' curr={currPrice} diff={priceDiff}/>,
+      <Ticker type='percent' curr={currPrice} diff={priceDiff}/>,
     ];
   }
 
@@ -50,7 +49,7 @@ class PriceTracker extends React.Component {
     }
   }
 
-  shouldComponentUpdate(nextProps, nextState){
+  shouldComponentUpdate(nextProps, nextState) {
     if (this.props.price === nextProps.price) {
       return false;
     }
@@ -58,11 +57,11 @@ class PriceTracker extends React.Component {
   }
 
   render() {
-    let [dollarTick, percentTick] = this.getTicker()
+    const [dollarTick, percentTick] = this.getTicker();
     return (
       <div className="priceTracker">
         <TitleBar dollarTick={dollarTick}/>
-        <span style={{display:"grid"}}>
+        <span style={{display: 'grid'}}>
           <StockPlot price={this.props.price} timestamp={this.props.timestamp}/>
           <span className='deltaOverlay'>{percentTick}</span>
         </span>
@@ -73,44 +72,41 @@ class PriceTracker extends React.Component {
 }
 
 
-  
-  
-  class TradeCenter extends React.Component{  
-    constructor(props) {
-      super(props);
-      this.state = {
-        cash: 1000,
-        stocks: 10
-      }
-      this.processTrade = this.processTrade.bind(this);
-    }
-  
-    processTrade(cash, stocks) {
-      if (this.props.pausedForTrade) {
-        this.setState({cash, stocks});
-        alert('Trade Submitted!')
-        this.props.resume();
-      }
-    }
-    
-    render() {
-      let {cash, stocks} = this.state;
-      return (
-        <div style={{display:"grid", gridTemplateRows: "1fr 4fr 3fr 2fr"}}>
-          <Message pausedForTrade={this.props.pausedForTrade} />
-          <TradingPanel pausedForTrade={this.props.pausedForTrade} price={this.props.price} cash={cash} stocks={stocks} processTrade={this.processTrade}/>    
-          <StatusTable price={this.props.price} cash={cash} stocks={stocks}/>
-      </div>
-      )
-      
+class TradeCenter extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      cash: 1000,
+      stocks: 10,
+    };
+    this.processTrade = this.processTrade.bind(this);
+  }
+
+  processTrade(cash, stocks) {
+    if (this.props.pausedForTrade) {
+      this.setState({cash, stocks});
+      alert('Trade Submitted!');
+      this.props.resume();
     }
   }
-  
-  
-  function Message (props) {
-    const out = (props.pausedForTrade ? "Enter a trade" : "Observe the market");
+
+  render() {
+    const {cash, stocks} = this.state;
     return (
-      <h2>{out}</h2>
+      <div style={{display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
+        <Message pausedForTrade={this.props.pausedForTrade} />
+        <TradingPanel pausedForTrade={this.props.pausedForTrade} price={this.props.price} cash={cash} stocks={stocks} processTrade={this.processTrade}/>
+        <StatusTable price={this.props.price} cash={cash} stocks={stocks}/>
+      </div>
     );
   }
-  
+}
+
+
+function Message(props) {
+  const out = (props.pausedForTrade ? 'Enter a trade' : 'Observe the market');
+  return (
+    <h2>{out}</h2>
+  );
+}
+
