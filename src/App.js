@@ -129,13 +129,15 @@ class App extends React.Component {
 
   render() {
     const price = Math.round((this.prices[this.state.nowIndex] + Number.EPSILON) * 100) / 100;
+    const price0 = Math.round((this.prices[0] + Number.EPSILON) * 100) / 100;
     const timestamp = this.timestamps[this.state.nowIndex];
 
     return (
       <div className="App">
         <div className="App-container" >
           <Modal show={this.state.showModal} onClose={this.closeModal} children={this.modalChild}/>
-          <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused} resume={this.unpauseTrading}/>
+          <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused}
+                        resume={this.unpauseTrading} price0={price0}/>
           <ExperimentSpeed one={this.one} five={this.five} ten={this.ten}/>
           <div>
             <p>{this.randomStonk.name}  {this.pauseIndices[0]}  {this.pauseIndices[1]}</p>

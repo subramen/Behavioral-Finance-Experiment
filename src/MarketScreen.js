@@ -12,7 +12,7 @@ export default function MarketScreen(props) {
   } else {
     return (
       <div className="market-screen">
-        <PriceTracker pausedForTrade={props.pausedForTrade} price={props.price} timestamp={props.timestamp} />
+        <PriceTracker pausedForTrade={props.pausedForTrade} price={props.price} timestamp={props.timestamp} price0={props.price0}/>
         <TradeCenter pausedForTrade={props.pausedForTrade} price={props.price} resume={props.resume}/>
       </div>
     );
@@ -62,7 +62,7 @@ class PriceTracker extends React.Component {
       <div className="priceTracker">
         <TitleBar dollarTick={dollarTick}/>
         <span style={{display: 'grid'}}>
-          <StockPlot price={this.props.price} timestamp={this.props.timestamp}/>
+          <StockPlot price={this.props.price} timestamp={this.props.timestamp} price0={this.props.price0}/>
           <span className='deltaOverlay'>{percentTick}</span>
         </span>
 
@@ -109,4 +109,3 @@ function Message(props) {
     <h2>{out}</h2>
   );
 }
-

@@ -20,6 +20,7 @@ export default class StockPlot extends React.Component {
           data: [],
         },
       ],
+      lineColor: 'rgb(60,0,100)',
     };
   }
 
@@ -28,10 +29,12 @@ export default class StockPlot extends React.Component {
     if (prevState.labels.length === 0 || prevState.labels[prevState.labels.length -1] !== nextProps.timestamp) {
       const priceData = {...prevState.datasets[0]};
       priceData.data = [...priceData.data, nextProps.price];
+      const lineColor = nextProps.price >= nextProps.price0 ? 'green' : 'red'
 
       return ({
         labels: [...prevState.labels, nextProps.timestamp],
         datasets: [priceData],
+        lineColor: lineColor,
       });
     }
 
@@ -39,7 +42,8 @@ export default class StockPlot extends React.Component {
   }
 
 
-  render() {
+  render(nextProps) {
+
     return (
       <div className='stockPlot'>
         <Line
@@ -54,8 +58,8 @@ export default class StockPlot extends React.Component {
                     type: 'line',
                     mode: 'horizontal',
                     scaleID: 'y-axis-0',
-                    value: Constant.PRICE_T0,
-                    borderColor: 'rgb(60,0,100)',
+                    value: this.props.price0,
+                    borderColor: this.state.lineColor,
                     borderWidth: 1,
                     borderDash: [10, 5],
                   }],
@@ -66,4 +70,3 @@ export default class StockPlot extends React.Component {
     );
   }
 }
-
