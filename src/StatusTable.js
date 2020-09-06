@@ -27,7 +27,7 @@ export default class StatusTable extends React.Component {
 
   componentDidUpdate() {
     if (this.prevPrice !== this.props.price) {
-      this.prevPrice = this.props.price;
+      // this.prevPrice = this.props.price;
     }
   }
 

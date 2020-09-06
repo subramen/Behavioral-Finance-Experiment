@@ -3,6 +3,7 @@ import './App.css';
 import MarketScreen from './MarketScreen';
 import Modal from './Modal';
 import data from './data/data.json';
+import { stats } from './stats'
 
 
 class App extends React.Component {
@@ -14,8 +15,9 @@ class App extends React.Component {
       showModal: false,
     };
 
-    this.WATERCOOLER = true;
-    [this.timestamps, this.prices, this.pauseIndices, this.randomStonkName] = RandomStonker();
+    this.WATERCOOLER = false;
+    [this.timestamps, this.prices, this.pauseIndices,
+    this.randomStonkName, this.sample_start, this.sample_end, this.prescaledVar, this.postscaledVar] = RandomStonker();
     this.modalChild = null;
 
     this.incrementIndex = this.incrementIndex.bind(this);
@@ -123,8 +125,8 @@ class App extends React.Component {
                         resume={this.unpauseTrading} price0={price0}/>
           <ExperimentSpeed one={this.one} five={this.five} ten={this.ten}/>
           <div>
-            <p>{this.randomStonkName}  {this.pauseIndices[0]}  {this.pauseIndices[1]}</p>
-            <p>{this.state.nowIndex}</p>
+            <p>{this.randomStonkName}  {this.sample_start}  {this.sample_end}</p>
+            <p>{this.state.nowIndex} {this.prescaledVar} {this.postscaledVar}</p>
           </div>
         </div>
       </div>
@@ -146,25 +148,43 @@ function FillerOrScreen() {
 }
 
 
-function RandomStonker() {
+function RandomStonker(scale=true) {
+  function IncreaseVariance(prices,multiplier=2) { // shape preserving
+    const mean_price = stats.mean(prices)
+    let scaledPrices = prices.map( x => mean_price + multiplier * (x - mean_price))
+    return scaledPrices
+  }
+
+  function AddNoise(prices, multiplier=1) {
+    const mean_price = stats.mean(prices)
+    return prices.map( x => x + multiplier * Math.round(Math.random() * (stats.max(prices) - stats.min(prices))) * (Math.random() < 0.5 ? 1 : -1))
+  }
+
   // CHOOSE A RANDOM STONK
   const stonks = data.stonks; // list
-  const ix = Math.round(Math.random()*(stonks.length-1));
+  // const ix = Math.round(Math.random()*(stonks.length-1));
+  const ix = 2;
   let randomStonk = stonks[ix];
 
   // // RANDOM SAMPLE THE STONK
   const N = randomStonk.timestamps.length;
   const SAMPLING_RATE = 0.3;
   const sample_size = Math.floor(N*SAMPLING_RATE);
-  const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, sample_size)
-  const sample_end = sample_start + sample_size;
+  // const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, N-sample_size)
+  // const sample_end = sample_start + sample_size;
+  const sample_start = 1055;
+  const sample_end = 3352;
 
-  let timestamps = randomStonk.timestamps.slice(sample_start, sample_end);
+  const timestamps = randomStonk.timestamps.slice(sample_start, sample_end);
   let prices = randomStonk.prices.slice(sample_start, sample_end);
-  let pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
+  const prescaledVar = stats.variance(prices)
+  prices = (scale ? AddNoise(prices) : prices);
+  const postscaledVar = stats.variance(prices)
+  const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
 
-  return [timestamps, prices, pauseIndices, randomStonk.name]
+  return [timestamps, prices, pauseIndices, randomStonk.name, sample_start, sample_end, prescaledVar, postscaledVar]
 }
+
 
 function Conclude() {
   return (

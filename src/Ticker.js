@@ -12,7 +12,7 @@ export default function Ticker(props) {
     <span className="Ticker" style={{color: color}}>
       <span style={{justifySelf: 'end'}}>${curr}</span>
       <span className={'triangle ' + (diff < 0 ? 'down' : 'up')}/>
-      <span style={{justifySelf: 'start'}}>{diff}</span>
+      <span style={{justifySelf: 'start'}}>${diff}</span>
     </span>
   );
 
