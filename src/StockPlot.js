@@ -2,7 +2,6 @@ import React from 'react';
 import {Line} from 'react-chartjs-2';
 import './App.css';
 import 'chartjs-plugin-annotation';
-import * as Constant from './constants';
 
 
 export default class StockPlot extends React.Component {

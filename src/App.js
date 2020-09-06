@@ -15,24 +15,7 @@ class App extends React.Component {
     };
 
     this.WATERCOOLER = true;
-
-    // CHOOSE A RANDOM STONK
-    const stonks = data.stonks; // list
-    const ix = Math.round(Math.random()*(stonks.length-1));
-    this.randomStonk = stonks[ix];
-
-    // // RANDOM SAMPLE THE STONK
-    const N = this.randomStonk.timestamps.length;
-    const SAMPLING_RATE = 0.3;
-    const sample_size = Math.floor(N*SAMPLING_RATE);
-    const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, sample_size)
-    const sample_end = sample_start + sample_size;
-
-
-    this.timestamps = this.randomStonk.timestamps.slice(sample_start, sample_end);
-    this.prices = this.randomStonk.prices.slice(sample_start, sample_end);
-    this.pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
-
+    [this.timestamps, this.prices, this.pauseIndices, this.randomStonkName] = RandomStonker();
     this.modalChild = null;
 
     this.incrementIndex = this.incrementIndex.bind(this);
@@ -140,7 +123,7 @@ class App extends React.Component {
                         resume={this.unpauseTrading} price0={price0}/>
           <ExperimentSpeed one={this.one} five={this.five} ten={this.ten}/>
           <div>
-            <p>{this.randomStonk.name}  {this.pauseIndices[0]}  {this.pauseIndices[1]}</p>
+            <p>{this.randomStonkName}  {this.pauseIndices[0]}  {this.pauseIndices[1]}</p>
             <p>{this.state.nowIndex}</p>
           </div>
         </div>
@@ -162,6 +145,26 @@ function FillerOrScreen() {
   );
 }
 
+
+function RandomStonker() {
+  // CHOOSE A RANDOM STONK
+  const stonks = data.stonks; // list
+  const ix = Math.round(Math.random()*(stonks.length-1));
+  let randomStonk = stonks[ix];
+
+  // // RANDOM SAMPLE THE STONK
+  const N = randomStonk.timestamps.length;
+  const SAMPLING_RATE = 0.3;
+  const sample_size = Math.floor(N*SAMPLING_RATE);
+  const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, sample_size)
+  const sample_end = sample_start + sample_size;
+
+  let timestamps = randomStonk.timestamps.slice(sample_start, sample_end);
+  let prices = randomStonk.prices.slice(sample_start, sample_end);
+  let pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
+
+  return [timestamps, prices, pauseIndices, randomStonk.name]
+}
 
 function Conclude() {
   return (
