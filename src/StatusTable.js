@@ -53,7 +53,7 @@ export default class StatusTable extends React.Component {
             <td>{stocks}</td>
           </tr>
           <tr>
-            <th>Portfolio</th>
+            <th>Portfolio/P&L</th>
             <td>{this.getPF()}</td>
           </tr>
         </tbody>

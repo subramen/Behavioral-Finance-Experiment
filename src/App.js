@@ -4,7 +4,7 @@ import MarketScreen from './MarketScreen';
 import Modal from './Modal';
 import data from './data/data.json';
 import { stats } from './stats'
-
+import Countdown from './timer';
 
 class App extends React.Component {
   constructor(props) {
@@ -15,7 +15,7 @@ class App extends React.Component {
       showModal: false,
     };
 
-    this.WATERCOOLER = false;
+    this.WATERCOOLER = true;
     [this.timestamps, this.prices, this.pauseIndices,
     this.randomStonkName, this.sample_start, this.sample_end, this.prescaledVar, this.postscaledVar] = RandomStonker();
     this.modalChild = null;
@@ -49,13 +49,15 @@ class App extends React.Component {
   }
 
   handleTimedEvents() {
-    if (this.pauseIndices.includes(this.state.nowIndex)) {
-      this.setState({marketPaused: true});
-    }
-
-    if (this.WATERCOOLER && this.state.nowIndex > this.pauseIndices[0] && this.state.nowIndex < this.pauseIndices[1]) {
-      this.setModal(true);
-      this.modalChild = FillerOrScreen();
+    // Pause for trading windows
+    if ( this.pauseIndices[0] <= this.state.nowIndex && this.state.nowIndex <= this.pauseIndices[1]) {
+      if (this.pauseIndices.includes(this.state.nowIndex)) {
+        this.setState({marketPaused: true});
+      }
+      else if (this.WATERCOOLER && !this.state.showModal) {
+        this.setModal(true);
+        this.modalChild = FillerOrScreen();
+      }
     }
 
     if (this.WATERCOOLER && this.state.nowIndex >= this.pauseIndices[1]) {
@@ -101,7 +103,7 @@ class App extends React.Component {
     clearInterval(this.timerID);
     this.timerID = setInterval(
         () => this.incrementIndex(),
-        100,
+        50,
     );
   }
 
@@ -122,7 +124,8 @@ class App extends React.Component {
         <div className="App-container" >
           <Modal show={this.state.showModal} onClose={this.closeModal} children={this.modalChild}/>
           <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused}
-                        resume={this.unpauseTrading} price0={price0}/>
+                        resume={this.unpauseTrading} price0={price0} tradeTS0={this.timestamps[this.pauseIndices[0]]}
+                        tradeTS1={this.timestamps[this.pauseIndices[1]]}/>
           <ExperimentSpeed one={this.one} five={this.five} ten={this.ten}/>
           <div>
             <p>{this.randomStonkName}  {this.sample_start}  {this.sample_end}</p>
@@ -141,6 +144,7 @@ function FillerOrScreen() {
       <h1>Water Break - Take a 5 minute break from the market</h1>
       <h2>Hydrate, check your notifications or simply close your eyes and focus on your breath.</h2>
       <h2>The market will resume after 5 minutes, so be sure to be back!</h2>
+      <Countdown then={Date.now() + 300000}/>,
       <br />
       <h3>For the control group, the experiment continues undisturbed.</h3>
     </div>
@@ -148,39 +152,33 @@ function FillerOrScreen() {
 }
 
 
-function RandomStonker(scale=true) {
+function RandomStonker(expMins=4) {
   function IncreaseVariance(prices,multiplier=2) { // shape preserving
     const mean_price = stats.mean(prices)
     let scaledPrices = prices.map( x => mean_price + multiplier * (x - mean_price))
     return scaledPrices
   }
 
-  function AddNoise(prices, multiplier=1) {
-    const mean_price = stats.mean(prices)
-    return prices.map( x => x + multiplier * Math.round(Math.random() * (stats.max(prices) - stats.min(prices))) * (Math.random() < 0.5 ? 1 : -1))
-  }
+  const interval = 1; // seconds between two data points
+  const sample_size = expMins * 60 / interval;
 
   // CHOOSE A RANDOM STONK
   const stonks = data.stonks; // list
-  // const ix = Math.round(Math.random()*(stonks.length-1));
-  const ix = 2;
-  let randomStonk = stonks[ix];
+  const ix = Math.round(Math.random()*(stonks.length-1));
+  let randomStonk = stonks[1];
 
   // // RANDOM SAMPLE THE STONK
   const N = randomStonk.timestamps.length;
-  const SAMPLING_RATE = 0.3;
-  const sample_size = Math.floor(N*SAMPLING_RATE);
-  // const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, N-sample_size)
-  // const sample_end = sample_start + sample_size;
-  const sample_start = 1055;
-  const sample_end = 3352;
+  const sample_start = Math.round(Math.random()*(N-sample_size)); // rand(0, N-sample_size)
+  const sample_end = sample_start + sample_size;
 
   const timestamps = randomStonk.timestamps.slice(sample_start, sample_end);
   let prices = randomStonk.prices.slice(sample_start, sample_end);
   const prescaledVar = stats.variance(prices)
-  prices = (scale ? AddNoise(prices) : prices);
+  prices = (stats.variance(prices) < 30 ? IncreaseVariance(prices) : prices);
   const postscaledVar = stats.variance(prices)
-  const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
+  // const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
+  const pauseIndices = [5, 65];
 
   return [timestamps, prices, pauseIndices, randomStonk.name, sample_start, sample_end, prescaledVar, postscaledVar]
 }

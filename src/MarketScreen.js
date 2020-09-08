@@ -12,7 +12,8 @@ export default function MarketScreen(props) {
   } else {
     return (
       <div className="market-screen">
-        <PriceTracker pausedForTrade={props.pausedForTrade} price={props.price} timestamp={props.timestamp} price0={props.price0}/>
+        <PriceTracker price={props.price} timestamp={props.timestamp}
+        price0={props.price0} tradeTS0={props.tradeTS0} tradeTS1={props.tradeTS1}/>
         <TradeCenter pausedForTrade={props.pausedForTrade} price={props.price} resume={props.resume}/>
       </div>
     );
@@ -33,7 +34,7 @@ class PriceTracker extends React.Component {
 
     return [
       <Ticker type='bold' curr={currPrice} diff={priceDiff}/>,
-      <Ticker type='percent' curr={currPrice} diff={priceDiff}/>,
+      <Ticker type='percent' curr={currPrice} diff={currPrice - this.props.price0}/>,
     ];
   }
 
@@ -62,7 +63,8 @@ class PriceTracker extends React.Component {
       <div className="priceTracker">
         <TitleBar dollarTick={dollarTick}/>
         <span style={{display: 'grid'}}>
-          <StockPlot price={this.props.price} timestamp={this.props.timestamp} price0={this.props.price0}/>
+          <StockPlot price={this.props.price} timestamp={this.props.timestamp}
+          price0={this.props.price0} tradeTS0={this.props.tradeTS0} tradeTS1={this.props.tradeTS1}/>
           <span className='deltaOverlay'>{percentTick}</span>
         </span>
 
@@ -83,6 +85,7 @@ class TradeCenter extends React.Component {
   }
 
   processTrade(cash, stocks) {
+    // accept trade. check that it is only during trading window
     if (this.props.pausedForTrade) {
       this.setState({cash, stocks});
       alert('Trade Submitted!');

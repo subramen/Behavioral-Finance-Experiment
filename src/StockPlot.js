@@ -61,7 +61,26 @@ export default class StockPlot extends React.Component {
                     borderColor: this.state.lineColor,
                     borderWidth: 1,
                     borderDash: [10, 5],
-                  }],
+                  },
+                  {
+                    type: 'line',
+                    mode: 'vertical',
+                    scaleID: 'x-axis-0',
+                    value: this.props.tradeTS0,
+                    borderColor: 'purple',
+                    borderWidth: 3,
+                    label: {backgroundColor: 'white', enabled:true, fontColor: 'purple', content:'Trade 1'},
+                  },
+                  {
+                    type: 'line',
+                    mode: 'vertical',
+                    scaleID: 'x-axis-0',
+                    value: this.props.tradeTS1,
+                    borderColor: 'purple',
+                    borderWidth: 3,
+                    label: {backgroundColor: 'white', enabled: true, fontColor: 'purple', content:'Trade 2'},
+                  },
+                  ],
               },
             }}
         />
