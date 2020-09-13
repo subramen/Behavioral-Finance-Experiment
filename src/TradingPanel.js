@@ -4,8 +4,10 @@ import './App.css';
 export default class TradingPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {buy: false, sell: false, qty: 0};
-
+    this.state = {
+      buy: false,
+      sell: false,
+      qty: 0};
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClickBuy = this.handleClickBuy.bind(this);
     this.handleClickSell = this.handleClickSell.bind(this);
@@ -90,7 +92,7 @@ class BuySellB extends React.Component {
     const buyClass = this.props.buy ? 'btn buy_active' : 'btn buy';
     const sellClass = this.props.sell ? 'btn sell_active' : 'btn sell';
     return (
-      <div style={{marginTop: '20px'}}>
+      <div id='buy-sell-btns' style={{marginTop: '20px'}}>
         <button className={buyClass} onClick={this.props.handleClickBuy}>BUY</button>
         <button className={sellClass} onClick={this.props.handleClickSell}>SELL</button>
       </div>
@@ -104,7 +106,7 @@ function TxnStatus(props) {
       <div className="txnStatus">{
         'Your trade: ' +
         (!props.buy && !props.sell ?
-          'HOLD' :
+          '-' :
           (props.sell ?
             'SELL '+ props.qty +' stocks' :
             'BUY '+ props.qty +' stocks'))

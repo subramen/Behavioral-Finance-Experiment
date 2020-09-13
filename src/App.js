@@ -6,16 +6,16 @@ import data from './data/data.json';
 import { stats } from './stats'
 import Countdown from './timer';
 
-class App extends React.Component {
+export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       nowIndex: 0,
-      marketPaused: false,
+      marketPaused: true,
       showModal: false,
     };
 
-    this.WATERCOOLER = true;
+    this.WATERCOOLER = false;
     [this.timestamps, this.prices, this.pauseIndices,
     this.randomStonkName, this.sample_start, this.sample_end, this.prescaledVar, this.postscaledVar] = RandomStonker();
     this.modalChild = null;
@@ -38,6 +38,8 @@ class App extends React.Component {
     );
   }
 
+
+  // ############ TIME CONTROL ############
   incrementIndex() {
     // increment index only when trading is inactive
     if (!this.state.marketPaused) {
@@ -55,19 +57,14 @@ class App extends React.Component {
         this.setState({marketPaused: true});
       }
       else if (this.WATERCOOLER && !this.state.showModal) {
+        // Market -> modal
         this.setModal(true);
         this.modalChild = FillerOrScreen();
       }
     }
 
-    if (this.WATERCOOLER && this.state.nowIndex >= this.pauseIndices[1]) {
-      this.setModal(false);
-      this.modalChild = null;
-    }
-
     // conclude experiment
     if (this.state.nowIndex === this.timestamps.length) {
-      console.log('hit2');
       this.setModal(true);
       this.modalChild = Conclude();
       clearInterval(this.timerID);
@@ -78,11 +75,24 @@ class App extends React.Component {
   unpauseTrading() {
     this.setState({marketPaused: false});
   }
+  // ############ TIME CONTROL ############
 
+
+  // ############ MODAL CONTROL ############
   setModal(flag) {
     this.setState({showModal: flag});
   }
 
+  closeModal() {
+    if (this.state.nowIndex > this.pauseIndices[1]) {
+      this.setModal(false);
+      this.modalChild = null;
+    }
+  }
+  // ############ MODAL CONTROL ############
+
+
+  // ############ EXPERIMENTAL ############
   one() {
     clearInterval(this.timerID);
     this.timerID = setInterval(
@@ -106,31 +116,24 @@ class App extends React.Component {
         50,
     );
   }
+  // ############ EXPERIMENTAL ############
 
-  closeModal() {
-    if (this.state.nowIndex > this.pauseIndices[1]) {
-      this.setModal(false);
-      this.modalChild = null;
-    }
-  }
 
   render() {
     const price = Math.round((this.prices[this.state.nowIndex] + Number.EPSILON) * 100) / 100;
     const price0 = Math.round((this.prices[0] + Number.EPSILON) * 100) / 100;
     const timestamp = this.timestamps[this.state.nowIndex];
 
+    console.log(price)
+
     return (
       <div className="App">
         <div className="App-container" >
           <Modal show={this.state.showModal} onClose={this.closeModal} children={this.modalChild}/>
           <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused}
-                        resume={this.unpauseTrading} price0={price0} tradeTS0={this.timestamps[this.pauseIndices[0]]}
-                        tradeTS1={this.timestamps[this.pauseIndices[1]]}/>
-          <ExperimentSpeed one={this.one} five={this.five} ten={this.ten}/>
-          <div>
-            <p>{this.randomStonkName}  {this.sample_start}  {this.sample_end}</p>
-            <p>{this.state.nowIndex} {this.prescaledVar} {this.postscaledVar}</p>
-          </div>
+                        unpauseTrading={this.unpauseTrading} price0={price0} trade0_ts={this.timestamps[this.pauseIndices[0]]}
+                        trade1_ts={this.timestamps[this.pauseIndices[1]]}/>
+          <button id="start-exp" className="btn" onClick={this.unpauseTrading} disabled={this.state.nowIndex}>Start</button>
         </div>
       </div>
     );
@@ -177,8 +180,7 @@ function RandomStonker(expMins=4) {
   const prescaledVar = stats.variance(prices)
   prices = (stats.variance(prices) < 30 ? IncreaseVariance(prices) : prices);
   const postscaledVar = stats.variance(prices)
-  // const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
-  const pauseIndices = [5, 65];
+  const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
 
   return [timestamps, prices, pauseIndices, randomStonk.name, sample_start, sample_end, prescaledVar, postscaledVar]
 }
@@ -203,6 +205,3 @@ class ExperimentSpeed extends React.Component {
     );
   }
 }
-
-
-export default App;

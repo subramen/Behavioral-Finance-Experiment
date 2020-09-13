@@ -42,7 +42,7 @@ html,body{ margin:0; padding:0; height:100%; width:100%; }
 
 
 .market-screen{
-  padding-top: 50px;
+  /* padding-top: 50px; */
   display: grid;
   grid-template-columns: 3fr 1fr;
   column-gap: 20;
@@ -102,10 +102,16 @@ html,body{ margin:0; padding:0; height:100%; width:100%; }
   margin: 9px 10px;
   cursor: pointer;
   box-shadow: 2px 1px 2px #999;
-
+  color: purple;
   font-size: 18px;
   font-weight: bold;
   text-align: center;
+}
+
+.btn:disabled {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
 }
 
 .buy {

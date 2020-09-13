@@ -46,6 +46,7 @@ export default class StockPlot extends React.Component {
     return (
       <div className='stockPlot'>
         <Line
+          id='stock-plot'
           data={this.state}
           options=
             {{
@@ -66,7 +67,7 @@ export default class StockPlot extends React.Component {
                     type: 'line',
                     mode: 'vertical',
                     scaleID: 'x-axis-0',
-                    value: this.props.tradeTS0,
+                    value: this.props.trade0_ts,
                     borderColor: 'purple',
                     borderWidth: 3,
                     label: {backgroundColor: 'white', enabled:true, fontColor: 'purple', content:'Trade 1'},
@@ -75,7 +76,7 @@ export default class StockPlot extends React.Component {
                     type: 'line',
                     mode: 'vertical',
                     scaleID: 'x-axis-0',
-                    value: this.props.tradeTS1,
+                    value: this.props.trade1_ts,
                     borderColor: 'purple',
                     borderWidth: 3,
                     label: {backgroundColor: 'white', enabled: true, fontColor: 'purple', content:'Trade 2'},

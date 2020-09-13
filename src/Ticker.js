@@ -17,7 +17,7 @@ export default function Ticker(props) {
   );
 
   const boldOut = (
-    <span className="Ticker" style={{color: color}}>
+    <span id='dollar-tick' className="Ticker" style={{color: color}}>
       <h2 style={{justifySelf: 'end'}}>{curr}</h2>
       <span className={'triangle ' + (diff < 0 ? 'down' : 'up')}/>
       <h2 style={{justifySelf: 'start'}}>{diff}</h2>
@@ -25,7 +25,7 @@ export default function Ticker(props) {
   );
 
   const pcOut = (
-    <span className="Ticker" style={{color: color}}>
+    <span id='percent-tick' className="Ticker" style={{color: color}}>
       <span className={'triangle ' + (diff < 0 ? 'down' : 'up')}/>
       <span style={{fontSize: '1.5em', fontWeight: 'bold', justifySelf: 'start'}}>{pc}%</span>
     </span>
