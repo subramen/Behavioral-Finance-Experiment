@@ -12,10 +12,10 @@ export default class App extends React.Component {
     this.state = {
       nowIndex: 0,
       marketPaused: true,
-      showModal: false,
+      showModalFlag: false,
     };
 
-    this.WATERCOOLER = false;
+    this.WATERCOOLER = true;
     [this.timestamps, this.prices, this.pauseIndices,
     this.randomStonkName, this.sample_start, this.sample_end, this.prescaledVar, this.postscaledVar] = RandomStonker();
     this.modalChild = null;
@@ -23,12 +23,14 @@ export default class App extends React.Component {
     this.incrementIndex = this.incrementIndex.bind(this);
     this.handleTimedEvents = this.handleTimedEvents.bind(this);
     this.unpauseTrading = this.unpauseTrading.bind(this);
-    this.setModal = this.setModal.bind(this);
+    this.setModalFlag = this.setModalFlag.bind(this);
+    this.showWatercoolerModal = this.showWatercoolerModal.bind(this);
+    this.showConcludeModal = this.showConcludeModal.bind(this);
     this.closeModal = this.closeModal.bind(this);
 
-    this.one = this.one.bind(this);
-    this.five = this.five.bind(this);
-    this.ten = this.ten.bind(this);
+    // this.one = this.one.bind(this);
+    // this.five = this.five.bind(this);
+    // this.ten = this.ten.bind(this);
   }
 
   componentDidMount() {
@@ -53,20 +55,21 @@ export default class App extends React.Component {
   handleTimedEvents() {
     // Pause for trading windows
     if ( this.pauseIndices[0] <= this.state.nowIndex && this.state.nowIndex <= this.pauseIndices[1]) {
+
       if (this.pauseIndices.includes(this.state.nowIndex)) {
         this.setState({marketPaused: true});
+        this.closeModal();
+        // market is unPaused when trade is submitted
       }
-      else if (this.WATERCOOLER && !this.state.showModal) {
-        // Market -> modal
-        this.setModal(true);
-        this.modalChild = FillerOrScreen();
+
+      else if (this.WATERCOOLER && !this.state.showModalFlag) {
+        this.showWatercoolerModal();
       }
     }
 
     // conclude experiment
     if (this.state.nowIndex === this.timestamps.length) {
-      this.setModal(true);
-      this.modalChild = Conclude();
+      this.showConcludeModal();
       clearInterval(this.timerID);
       this.setState({nowIndex: this.timestamps.length-1});
     }
@@ -79,13 +82,27 @@ export default class App extends React.Component {
 
 
   // ############ MODAL CONTROL ############
-  setModal(flag) {
-    this.setState({showModal: flag});
+  setModalFlag(flag) {
+    this.setState({showModalFlag: flag});
+  }
+
+  showWatercoolerModal() {
+    this.setModalFlag(true);
+    this.modalChild = WatercoolerScreen();
+  }
+
+  showConcludeModal() {
+    this.setModalFlag(true);
+    this.modalChild = (
+      <div>
+        <h1>Experiment complete</h1>
+      </div>
+    );
   }
 
   closeModal() {
-    if (this.state.nowIndex > this.pauseIndices[1]) {
-      this.setModal(false);
+    if (this.state.nowIndex >= this.pauseIndices[1]) {
+      this.setModalFlag(false);
       this.modalChild = null;
     }
   }
@@ -124,12 +141,10 @@ export default class App extends React.Component {
     const price0 = Math.round((this.prices[0] + Number.EPSILON) * 100) / 100;
     const timestamp = this.timestamps[this.state.nowIndex];
 
-    console.log(price)
-
     return (
       <div className="App">
         <div className="App-container" >
-          <Modal show={this.state.showModal} onClose={this.closeModal} children={this.modalChild}/>
+          <Modal show={this.state.showModalFlag} onClose={this.closeModal} children={this.modalChild}/>
           <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused}
                         unpauseTrading={this.unpauseTrading} price0={price0} trade0_ts={this.timestamps[this.pauseIndices[0]]}
                         trade1_ts={this.timestamps[this.pauseIndices[1]]}/>
@@ -141,13 +156,13 @@ export default class App extends React.Component {
 }
 
 
-function FillerOrScreen() {
+function WatercoolerScreen() {
   return (
     <div>
       <h1>Water Break - Take a 5 minute break from the market</h1>
       <h2>Hydrate, check your notifications or simply close your eyes and focus on your breath.</h2>
       <h2>The market will resume after 5 minutes, so be sure to be back!</h2>
-      <Countdown then={Date.now() + 300000}/>,
+      <Countdown then={Date.now() + 60000}/>,
       <br />
       <h3>For the control group, the experiment continues undisturbed.</h3>
     </div>
@@ -155,7 +170,7 @@ function FillerOrScreen() {
 }
 
 
-function RandomStonker(expMins=4) {
+function RandomStonker(wcMins=1) {
   function IncreaseVariance(prices,multiplier=2) { // shape preserving
     const mean_price = stats.mean(prices)
     let scaledPrices = prices.map( x => mean_price + multiplier * (x - mean_price))
@@ -163,7 +178,8 @@ function RandomStonker(expMins=4) {
   }
 
   const interval = 1; // seconds between two data points
-  const sample_size = expMins * 60 / interval;
+  // const sample_size = expMins * 60 / interval;
+  const sample_size = wcMins * (60 / interval) * (100 / 40);
 
   // CHOOSE A RANDOM STONK
   const stonks = data.stonks; // list
@@ -186,13 +202,6 @@ function RandomStonker(expMins=4) {
 }
 
 
-function Conclude() {
-  return (
-    <div>
-      <h1>Experiment complete</h1>
-    </div>
-  );
-}
 
 class ExperimentSpeed extends React.Component {
   render() {
