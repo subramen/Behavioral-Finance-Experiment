@@ -40,7 +40,6 @@ export default class TradingPanel extends React.Component {
   getTxnStats() {
     const { price, cash, stocks } = this.props;
     const { buy, sell, inputQty } = this.state;
-
     return {
       maxQty : (buy ? Math.floor(cash/price) : (sell ? stocks : 0)),
       nextCash: stats.precisionRound((buy ? cash - (inputQty * price) :  cash + (inputQty * price)), 2),

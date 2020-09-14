@@ -101,7 +101,12 @@ export default class MarketScreen extends React.Component{
         <div className="market-screen">
           <PriceTracker price={this.props.price} timestamp={this.props.timestamp}
           price0={this.props.price0} trade0_ts={this.props.trade0_ts} trade1_ts={this.props.trade1_ts}/>
-          <TradeCenter pausedForTrade={this.props.pausedForTrade} price={this.props.price} unpauseTrading={this.props.unpauseTrading} />
+          <TradeCenter
+            pausedForTrade={this.props.pausedForTrade}
+            price={this.props.price}
+            unpauseTrading={this.props.unpauseTrading}
+            isWalkthrough={this.props.isWalkthrough}
+          />
         </div>
       </div>
     );
@@ -181,7 +186,7 @@ class TradeCenter extends React.Component {
   render() {
     const {cash, stocks} = this.state;
     return (
-      <div style={{display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
+      <div style={this.props.isWalkthrough ? {pointerEvents: "none"} : {display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
         <StatusMessage pausedForTrade={this.props.pausedForTrade} />
         <TradingPanel pausedForTrade={this.props.pausedForTrade} price={this.props.price} cash={cash} stocks={stocks} processTrade={this.processTrade} />
         <StatusTable price={this.props.price} cash={cash} stocks={stocks}/>

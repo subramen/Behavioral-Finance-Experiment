@@ -140,6 +140,7 @@ export default class App extends React.Component {
     const price = stats.precisionRound(this.prices[this.state.nowIndex], 2);
     const price0 = stats.precisionRound(this.prices[0], 2);
     const timestamp = this.timestamps[this.state.nowIndex];
+    const isWalkthrough = (this.state.nowIndex == 0);
 
     return (
       <div className="App">
@@ -147,7 +148,7 @@ export default class App extends React.Component {
           <Modal show={this.state.showModalFlag} onClose={this.closeModal} children={this.modalChild}/>
           <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused}
                         unpauseTrading={this.unpauseTrading} price0={price0} trade0_ts={this.timestamps[this.pauseIndices[0]]}
-                        trade1_ts={this.timestamps[this.pauseIndices[1]]} />
+                        trade1_ts={this.timestamps[this.pauseIndices[1]]} isWalkthrough={isWalkthrough}/>
           <button id="start-exp" className="btn" onClick={this.unpauseTrading} disabled={this.state.nowIndex}>Start</button>
         </div>
       </div>
