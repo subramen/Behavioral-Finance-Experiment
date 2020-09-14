@@ -40,16 +40,16 @@ export default class MarketScreen extends React.Component{
         placement: 'auto'
       },
       {
-        target: '.inputBox',
+        target: '#buy-sell-btns',
         title: 'Placing a Trade - Step 1/3',
-        content: 'Enter the number of units you want to trade (0 or more)...',
+        content: 'Click on either Buy or Sell...',
         event: 'hover',
         placement: 'auto'
       },
       {
-        target: '#buy-sell-btns',
+        target: '.inputBox',
         title: 'Placing a Trade - Step 2/3',
-        content: 'Click on either Buy or Sell...',
+        content: 'Enter the number of units you want to trade (0 or more)...',
         event: 'hover',
         placement: 'auto'
       },
@@ -63,12 +63,13 @@ export default class MarketScreen extends React.Component{
       {
         target: '.grayTable',
         title: 'Assets',
-        content: <p>Here you can see your current holdings and portfolio.<br/><br/>You will start with $1000 and 10 units of the currency.</p>,
+        content: <p>Here you can see your current holdings, net worth (cash + stock), and your Profit/Loss since the start of the experiment.<br/><br/>You will start with $1000 and 10 units of the currency.</p>,
         event: 'hover',
         placement: 'auto'
       },
       {
         target: '#start-exp',
+        title: 'Good luck!',
         content: <p>The experiment will last for 10 minutes. Ensure you are undisturbed for the entire duration. <br/><br/>Click here to begin!</p>,
         event: 'hover',
         placement: 'auto'

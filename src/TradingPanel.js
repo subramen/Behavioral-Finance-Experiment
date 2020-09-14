@@ -44,7 +44,7 @@ export default class TradingPanel extends React.Component {
     return {
       maxQty : (buy ? Math.floor(cash/price) : (sell ? stocks : 0)),
       nextCash: stats.precisionRound((buy ? cash - (inputQty * price) :  cash + (inputQty * price)), 2),
-      nextStock: (buy ? stocks + inputQty :  stocks - inputQty),
+      nextStock: (buy ? stocks + parseInt(inputQty) :  stocks - parseInt(inputQty)),
     };
 
   }
