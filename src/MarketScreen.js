@@ -28,7 +28,7 @@ export default class MarketScreen extends React.Component{
       },
       {
         target: '#percent-tick',
-        content: 'This indicates the % change from the initial exchange rate.',
+        content: 'Indicates the % change from the initial exchange rate.',
         event: 'hover',
         offset: 0,
       },
@@ -100,7 +100,7 @@ export default class MarketScreen extends React.Component{
         <div className="market-screen">
           <PriceTracker price={this.props.price} timestamp={this.props.timestamp}
           price0={this.props.price0} trade0_ts={this.props.trade0_ts} trade1_ts={this.props.trade1_ts}/>
-          <TradeCenter pausedForTrade={this.props.pausedForTrade} price={this.props.price} unpauseTrading={this.props.unpauseTrading}/>
+          <TradeCenter pausedForTrade={this.props.pausedForTrade} price={this.props.price} unpauseTrading={this.props.unpauseTrading} />
         </div>
       </div>
     );
@@ -182,7 +182,7 @@ class TradeCenter extends React.Component {
     return (
       <div style={{display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
         <StatusMessage pausedForTrade={this.props.pausedForTrade} />
-        <TradingPanel pausedForTrade={this.props.pausedForTrade} price={this.props.price} cash={cash} stocks={stocks} processTrade={this.processTrade}/>
+        <TradingPanel pausedForTrade={this.props.pausedForTrade} price={this.props.price} cash={cash} stocks={stocks} processTrade={this.processTrade} />
         <StatusTable price={this.props.price} cash={cash} stocks={stocks}/>
       </div>
     );

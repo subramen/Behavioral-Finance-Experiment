@@ -1,5 +1,8 @@
 import React from 'react';
 import './App.css';
+import { stats } from './stats'
+import PropTypes from 'prop-types';
+
 
 export default class TradingPanel extends React.Component {
   constructor(props) {
@@ -7,15 +10,17 @@ export default class TradingPanel extends React.Component {
     this.state = {
       buy: false,
       sell: false,
-      qty: 0};
-    this.handleInputChange = this.handleInputChange.bind(this);
+      inputQty: 0};
+    this.updateInput = this.updateInput.bind(this);
     this.handleClickBuy = this.handleClickBuy.bind(this);
     this.handleClickSell = this.handleClickSell.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.getTxnStats = this.getTxnStats.bind(this);
+    this.getFeedbackStatus = this.getFeedbackStatus.bind(this);
   }
 
-  handleInputChange(e) {
-    this.setState({qty: e.target.value});
+  updateInput(e) {
+    this.setState({inputQty: e.target.value});
   }
 
   handleClickBuy() {
@@ -32,44 +37,78 @@ export default class TradingPanel extends React.Component {
     );
   }
 
+  getTxnStats() {
+    const { price, cash, stocks } = this.props;
+    const { buy, sell, inputQty } = this.state;
+
+    return {
+      maxQty : (buy ? Math.floor(cash/price) : (sell ? stocks : 0)),
+      nextCash: stats.precisionRound((buy ? cash - (inputQty * price) :  cash + (inputQty * price)), 2),
+      nextStock: (buy ? stocks + inputQty :  stocks - inputQty),
+    };
+
+  }
+
   handleSubmit() {
-    const {price, cash, stocks, processTrade} = this.props;
-    const txnVal = this.state.qty * price;
-
-    // check for txn validity
-    if (this.state.buy && txnVal <= cash) {
-      const nextCash = cash - txnVal;
-      const nextStock = stocks + parseInt(this.state.qty);
-      processTrade(nextCash, nextStock);
-    } else if (this.state.sell && this.state.qty <= stocks) {
-      const nextCash = cash + txnVal;
-      const nextStock = stocks - parseInt(this.state.qty);
-      processTrade(nextCash, nextStock);
-    } else if (!this.state.buy && !this.state.sell && this.state.qty === 0) {
-      processTrade(cash, stocks);
-    } else {
-      alert('Invalid Transaction!');
-    }
-
+    const { nextCash, nextStock } = this.getTxnStats();
+    this.props.processTrade(nextCash, nextStock);
     this.setState({buy: false, sell: false});
+  }
+
+  getFeedbackStatus() {
+    const { buy, sell, inputQty } = this.state;
+    const { maxQty, nextCash } = this.getTxnStats();
+
+    const maxQtyStatus = (
+      buy || sell ?
+      'Stocks available for  ' + (sell ? 'sale' : 'purchase') + ': ' + maxQty :
+      ''
+    );
+
+    const yourTrade = (
+      this.props.pausedForTrade ?
+        (
+          'Your trade: ' +
+          buy ?
+            'Buy ' + inputQty + ' stocks' :
+            (sell ? 'Sell ' + inputQty + 'stocks' : '-')
+        ) :
+        ''
+    );
+
+    const remCashStatus = (
+      (this.props.pausedForTrade && (buy || sell)) ?
+      'Your cash after this trade: $' + nextCash :
+      ''
+    );
+
+    return {
+      maxQty: <div id='max-qty-status'>{maxQtyStatus}</div>,
+      yourTrade: <div id='your-trade-status'>{yourTrade}</div>,
+      remCash: <div id='rem-cash-status'>{remCashStatus}</div>,
+    }
   }
 
   render() {
     return (
       <div style={{alignSelf: 'center'}}>
+        {this.getFeedbackStatus().maxQty}
         <fieldset className="panel">
-          <div className="content" style={{marginTop: '20px'}}>
+          <div className="content" style={{marginTop: '10px'}}>
             <div className="input" style={{marginBottom: '30px'}}>
-              <InputBox handleInputChange={this.handleInputChange}/>
-
               <BuySellB
                 handleClickBuy={this.handleClickBuy}
                 handleClickSell={this.handleClickSell}
                 buy={this.state.buy}
                 sell={this.state.sell}
               />
+              <ValidatedInputBox
+                updateInput={this.updateInput}
+                txnStats={this.getTxnStats}
+                disabled={!this.props.pausedForTrade}
+              />
             </div>
-            <TxnStatus show={this.props.pausedForTrade} buy={this.state.buy} sell={this.state.sell} qty={this.state.qty} />
+            {this.getFeedbackStatus().remCash}
             <button className="btn submit" disabled={!this.props.pausedForTrade} onClick={this.handleSubmit}>SUBMIT</button>
           </div>
         </fieldset>
@@ -78,11 +117,20 @@ export default class TradingPanel extends React.Component {
   }
 }
 
-function InputBox(props) {
+
+function ValidatedInputBox(props) {
   return (
     <div className='inputBox'>
       <label htmlFor='in'>No. of Stocks: </label>
-      <input type='number' placeholder='0' min='0' onChange={props.handleInputChange}></input>
+      <input
+        type='number'
+        placeholder={0}
+        min={0}
+        max={props.txnStats().maxQty}
+        onChange={props.updateInput}
+        disabled={props.disabled}
+        onKeyDown={(e) => {e.preventDefault();}}
+      />
     </div>
   );
 }
@@ -92,27 +140,10 @@ class BuySellB extends React.Component {
     const buyClass = this.props.buy ? 'btn buy_active' : 'btn buy';
     const sellClass = this.props.sell ? 'btn sell_active' : 'btn sell';
     return (
-      <div id='buy-sell-btns' style={{marginTop: '20px'}}>
+      <div id='buy-sell-btns' style={{marginBottom: '20px'}}>
         <button className={buyClass} onClick={this.props.handleClickBuy}>BUY</button>
         <button className={sellClass} onClick={this.props.handleClickSell}>SELL</button>
       </div>
     );
-  }
-}
-
-function TxnStatus(props) {
-  if (props.show) {
-    return (
-      <div className="txnStatus">{
-        'Your trade: ' +
-        (!props.buy && !props.sell ?
-          '-' :
-          (props.sell ?
-            'SELL '+ props.qty +' stocks' :
-            'BUY '+ props.qty +' stocks'))
-      }</div>
-    );
-  } else {
-    return null;
   }
 }

@@ -79,7 +79,12 @@ var stats = {
 		return array.map(function(num) {
 			return (num - mean) / standardDeviation;
 		});
-	}
+	},
+
+	precisionRound: function(float, precision) {
+		var power = Math.pow(10, precision)
+		return Math.round((float + Number.EPSILON) * power) / power;
+	},
 };
 
 export { stats }

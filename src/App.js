@@ -137,8 +137,8 @@ export default class App extends React.Component {
 
 
   render() {
-    const price = Math.round((this.prices[this.state.nowIndex] + Number.EPSILON) * 100) / 100;
-    const price0 = Math.round((this.prices[0] + Number.EPSILON) * 100) / 100;
+    const price = stats.precisionRound(this.prices[this.state.nowIndex], 2);
+    const price0 = stats.precisionRound(this.prices[0], 2);
     const timestamp = this.timestamps[this.state.nowIndex];
 
     return (
@@ -147,7 +147,7 @@ export default class App extends React.Component {
           <Modal show={this.state.showModalFlag} onClose={this.closeModal} children={this.modalChild}/>
           <MarketScreen price={price} timestamp={timestamp} pausedForTrade={this.state.marketPaused}
                         unpauseTrading={this.unpauseTrading} price0={price0} trade0_ts={this.timestamps[this.pauseIndices[0]]}
-                        trade1_ts={this.timestamps[this.pauseIndices[1]]}/>
+                        trade1_ts={this.timestamps[this.pauseIndices[1]]} />
           <button id="start-exp" className="btn" onClick={this.unpauseTrading} disabled={this.state.nowIndex}>Start</button>
         </div>
       </div>
@@ -196,7 +196,8 @@ function RandomStonker(wcMins=1) {
   const prescaledVar = stats.variance(prices)
   prices = (stats.variance(prices) < 30 ? IncreaseVariance(prices) : prices);
   const postscaledVar = stats.variance(prices)
-  const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
+  // const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
+  const pauseIndices = [5, 10];
 
   return [timestamps, prices, pauseIndices, randomStonk.name, sample_start, sample_end, prescaledVar, postscaledVar]
 }
