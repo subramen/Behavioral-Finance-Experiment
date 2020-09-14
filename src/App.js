@@ -197,8 +197,7 @@ function RandomStonker(wcMins=1) {
   const prescaledVar = stats.variance(prices)
   prices = (stats.variance(prices) < 30 ? IncreaseVariance(prices) : prices);
   const postscaledVar = stats.variance(prices)
-  // const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
-  const pauseIndices = [5, 10];
+  const pauseIndices = [Math.floor(sample_size*4/10), Math.floor(sample_size*8/10)];
 
   return [timestamps, prices, pauseIndices, randomStonk.name, sample_start, sample_end, prescaledVar, postscaledVar]
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import PropTypes from 'prop-types';
 import Ticker from './Ticker';
+import { stats } from './stats'
 
 
 export default class StatusTable extends React.Component {
@@ -13,8 +14,8 @@ export default class StatusTable extends React.Component {
 
   getPF() {
     const { stocks, price, cash } = this.props;
-    const currPF = Math.round((stocks * price)*100)/100 + cash;
-    const prevPF = Math.round((stocks * this.prevPrice)*100)/100 + 1000;
+    const currPF = stats.precisionRound(stocks * price, 2) + cash;
+    const prevPF = stats.precisionRound(stocks * this.prevPrice, 2) + 1000;
 
     const priceDiff = (this.prevPrice ? Math.round((currPF - prevPF + Number.EPSILON) * 100) / 100 : 0);
     return <Ticker type='lite' curr={currPF} diff={priceDiff}/>;
