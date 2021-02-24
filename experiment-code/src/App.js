@@ -15,14 +15,23 @@ import {Line} from 'react-chartjs-2';
 import './App.css';
 import { now } from 'moment';
 
+const API_URL = '';
 
+const expStartTimeState = atom({
+  key: 'expStartTime',
+  default: null,
+})
+const intervalMultiplierState = atom({
+  key: 'intervalMultiplierState',
+  default: 1,
+})
 const nowIdxState = atom({
     key: 'nowIdxState', 
     default: 0, 
 });
 
-const mktPauseState = atom({
-    key: 'mktPauseState',
+const expPauseState = atom({
+    key: 'expPauseState',
     default: true,
 })
 
@@ -39,39 +48,70 @@ const configState =  atom({
 });
 
 
+// Price atoms
 
+// const quotesDB = atom({
+//   key: 'real-time-quotes-db',
+//   default: {},
+// }); 
 
-const quotesDB = atom({
-  key: 'real-time-quotes-db',
-  default: {},
-}); 
+// const rtQuotes = atom({
+//   key: 'quotes-selector',
+//   default: []
+// }); 
 
-const rtQuotes = atom({
-  key: 'quotes-selector',
-  default: []
-}); 
+// const currentPriceState = selector({
+//   key: 'currPrice',
+//   get: ({get}) => {
+//     const nowIdx = get(nowIdxState);
+//     const quotes = get(rtQuotes);
+//     const [ts, quote] = quotes[nowIdx];
+//     return (quote || 0);
+//   }
+// });
 
-const currentPriceState = selector({
-  key: 'currPrice',
-  get: ({get}) => {
-    const nowIdx = get(nowIdxState);
-    const quotes = get(rtQuotes);
-    const [ts, quote] = quotes[nowIdx];
-    return (quote || 0);
+// const prevPriceState = selector({
+//   key: 'prevPrice',
+//   get: ({get}) => {
+//     const nowIdx = get(nowIdxState);
+//     const rtq = get(rtQuotes).quote
+//     return (nowIdx===0) ? 0 : rtq[nowIdx-1];
+//   }
+// });
+
+const fetchQuote = selector({
+  key: 'fetchQuoteSelector',
+  get: async ({get}) => {
+    try {
+      const response = await fetch(API_URL + '/' + Date.now());
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 });
 
-const prevPriceState = selector({
-  key: 'prevPrice',
-  get: ({get}) => {
+// todo: parameterize selector for slice start end\
+const fetchQuoteSlice = selector({
+  key: 'fetchQuoteSliceSelector',
+  get: async ({get}) => {
+    const expStart = get(expStartTimeState);
+    const multiplier = get(intervalMultiplierState);
     const nowIdx = get(nowIdxState);
-    const rtq = get(rtQuotes).quote
-    return (nowIdx===0) ? 0 : rtq[nowIdx-1];
+    try {
+      const response = await fetch(API_URL + '/slice/' + 
+      expStart + '/' + (expStart + nowIdx * multiplier));
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 });
 
 
-
+// State atoms 
 
 const cashState = atom({
   key:'cashState',
@@ -128,54 +168,56 @@ export default function App() {
   return (
     <RecoilRoot>
       <div className="App">
-        <StockMarket />
+        <ExperimentDisplay />
       </div>
     </RecoilRoot>
   );
-  }
+}
 
-const Subscriber = () => {
-  const [state, setState] = useRecoilState(quotesDB);
+// const Subscriber = () => {
+//   const [state, setState] = useRecoilState(quotesDB);
 
-  const runQuery = () => fetch("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=US&symbols=AAPL", {
-    "method": "GET",
-    "headers": {
-      "x-rapidapi-key": "57a6f99753mshf2f96c7d07b7f5fp1892c3jsn4bf4d977a411",
-      "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com"
-    }
-  })
-  .then(response => response.json())
-  .then(body => {
-    const q = body['quoteResponse']['result'][0]['regularMarketPrice']
-    const ts = body['quoteResponse']['result'][0]['regularMarketTime']
-    setState({quote: [...state.quote, q], timestamps: [...state.timestamps, ts]});
-    console.log(ts, q)
-  })
-  .catch(err => {
-    console.error(err);
-  });
+//   const runQuery = () => fetch("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=US&symbols=AAPL", {
+//     "method": "GET",
+//     "headers": {
+//       "x-rapidapi-key": "57a6f99753mshf2f96c7d07b7f5fp1892c3jsn4bf4d977a411",
+//       "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com"
+//     }
+//   })
+//   .then(response => response.json())
+//   .then(body => {
+//     const q = body['quoteResponse']['result'][0]['regularMarketPrice']
+//     const ts = body['quoteResponse']['result'][0]['regularMarketTime']
+//     setState({quote: [...state.quote, q], timestamps: [...state.timestamps, ts]});
+//     console.log(ts, q)
+//   })
+//   .catch(err => {
+//     console.error(err);
+//   });
 
-  useEffect(() => {
-  // runQuery();
-  setState({quote: [...state.quote, Math.floor(Math.random() * 10)], timestamps: [...state.timestamps, state.timestamps.length()+1]});
-  })
-  return null;
-};
+//   useEffect(() => {
+//   // runQuery();
+//   setState({quote: [...state.quote, Math.floor(Math.random() * 10)], timestamps: [...state.timestamps, state.timestamps.length()+1]});
+//   })
+//   return null;
+// };
 
 
-const StockMarket = () => {
+const ExperimentDisplay = () => {
   const [nowIdx, setNowIdx] = useRecoilState(nowIdxState);
-  const [mktPause, setMktPause] = useRecoilState(mktPauseState);
+  const [expPause, setExpPause] = useRecoilState(expPauseState);
+  const setExpStartTime = useSetRecoilState(expStartTimeState);
+  const timeInterval = useRecoilValue(intervalMultiplierState) * 1000;
   const isTradeTime = useRecoilValue(isTimeToTrade);
 
   useEffect(() => {
       // pause at T1 or T2. mkt is unpaused when trade is submitted.
-      if (isTradeTime) setMktPause(true);
+      if (isTradeTime) setExpPause(true);
 
       // increment `nowIdx` every 1000ms if market is unpaused
       const interval = setInterval(() => {
-          if (!mktPause) setNowIdx(nowIdx + 1);            
-      }, 1000);
+          if (!expPause) setNowIdx(nowIdx + 1);            
+      }, timeInterval);
 
       console.log(nowIdx);
 
@@ -188,7 +230,10 @@ const StockMarket = () => {
       <MarketScreen />
       <button id="start-exp" 
         className="btn" 
-        onClick={() => setMktPause(false)} 
+        onClick={() => {
+          setExpPause(false); 
+          setExpStartTime(Math.round(Date.now()/1000));
+        }}
         disabled={nowIdx}>Start</button>
     </div>
   );
@@ -326,7 +371,7 @@ const Walkthrough = () => {
 
 const StockDisplay = () => {
   const price0 = useRecoilValue(configState).price0;
-  const price = useRecoilValue(currentPriceState);
+  const price = useRecoilValue(currentPriceState); // use fetchQuote here
   const prevPrice = useRecoilValue(prevPriceState);
   const priceDiff = (prevPrice ? Math.round((price - prevPrice + Number.EPSILON) * 100) / 100 : 0);
 
@@ -340,11 +385,11 @@ const StockDisplay = () => {
   };
 
   const StockChart = () => {
-    const nowIdx = useRecoilValue(nowIdxState);
-
+    // const nowIdx = useRecoilValue(nowIdxState);
     const config = useRecoilValue(configState);
-    const labels = useRecoilValue(rtQuotes).timestamps.slice(0, nowIdx);
-    const quotes = useRecoilValue(rtQuotes).quote.slice(0, nowIdx);
+    const {labels, quotes} = useRecoilValue(fetchQuoteSlice);
+    // const labels = useRecoilValue(rtQuotes).timestamps.slice(0, nowIdx); // use fetchQuoteSlice here
+    // const quotes = useRecoilValue(rtQuotes).quote.slice(0, nowIdx);
     
     const chartMeta = {
       labels: labels,
@@ -423,11 +468,11 @@ const StockDisplay = () => {
 
 
 const TradeCenter = ({isWalkthrough}) => {
-  const [mktPause, setMktPause] = useRecoilState(mktPauseState);
+  const [expPause, setExpPause] = useRecoilState(expPauseState);
 
   const StatusMessage = () => 
     <h2 id='status-message'>
-      {(mktPause ? 'Enter a trade' : 'Observe the market')}
+      {(expPause ? 'Enter a trade' : 'Observe the market')}
     </h2>;
 
 
@@ -448,7 +493,7 @@ const TradeCenter = ({isWalkthrough}) => {
     const yourTradeStatus = () => {
       const action = buy ? 'Buy ': (sell ? 'Sell ' : null);
       const status = action !== null ? action + qty + ' stocks' : '-';
-      return (mktPause ? "Your trade: " + status : '');
+      return (expPause ? "Your trade: " + status : '');
     };
 
     const handleSubmit = () => {
@@ -459,7 +504,7 @@ const TradeCenter = ({isWalkthrough}) => {
       setCash(nextCash);
       setStock(nextStock);
       setBuySell({buy:false, sell: false});
-      setMktPause(false);
+      setExpPause(false);
     };
 
     const ValidatedInput = () => {
@@ -472,7 +517,7 @@ const TradeCenter = ({isWalkthrough}) => {
             min={0}
             max={maxQty}
             onChange={(e) => {setQty(parseInt(e.target.value));}}
-            disabled={!mktPause}
+            disabled={!expPause}
             onKeyDown={(e) => {e.preventDefault();}}
           />
         </div>
@@ -508,7 +553,7 @@ const TradeCenter = ({isWalkthrough}) => {
               <ValidatedInput />
             </div>
             {yourTradeStatus}
-            <button className="btn submit" disabled={!mktPause} onClick={handleSubmit}>SUBMIT</button>
+            <button className="btn submit" disabled={!expPause} onClick={handleSubmit}>SUBMIT</button>
           </div>
         </fieldset>
       </div>
