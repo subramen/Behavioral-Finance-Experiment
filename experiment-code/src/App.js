@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     RecoilRoot,
     atom,
@@ -6,7 +6,7 @@ import {
     useRecoilState,
     useRecoilValue,
     useSetRecoilState,
-    constSelector,
+    useRecoilValueLoadable,
   } from 'recoil';
 import Ticker from './Ticker'
 import { stats } from './stats'
@@ -14,7 +14,7 @@ import Countdown from './components/timer'
 import Joyride from 'react-joyride';
 import {Line} from 'react-chartjs-2';
 import './App.css';
-import { now } from 'moment';
+import { max } from 'moment';
 
 const API_URL = 'http://localhost:5000';
 
@@ -24,7 +24,7 @@ const expStartTimeState = atom({
 })
 const intervalMultiplierState = atom({
   key: 'intervalMultiplierState',
-  default: 5,
+  default: 1,
 })
 const nowIdxState = atom({
     key: 'nowIdxState', 
@@ -39,28 +39,23 @@ const expPauseState = atom({
 const configState =  atom({
   key: 'configState',
   default: {
-    T1: 50,
+    T1: 10,
     T2: 100,
     TN: 300,
-    WC: true,
+    WC: false,
     price0: 0,
     initCash: 1000,
   }
 });
 
-const fetchQuote = selector({
-  key: 'fetchQuoteSelector',
-  get: async ({get}) => {
-    try {
-      const response = await fetch(API_URL + '/get');
-      const data = await response.json();
-      console.log("fetchQuote: ", data);
-      return data;
-    } catch (error) {
-      throw error;
-    }
+
+const fetchSingleQuote = selector({
+  key: 'fetchSingleQuote',
+  get: async () => {
+    const response = await fetch(API_URL + '/get').then(data => data.json());
+    return response;
   }
-});
+})
 
 const fetchQuoteSlice = selector({
   key: 'fetchQuoteSliceSelector',
@@ -103,16 +98,6 @@ const buySellState = atom({
   }
 });
 
-const selectMaxQty = selector({
-  key: 'maxQty',
-  get: ({get}) => {
-    const cash = get(cashState);
-    const {price, x} = get(fetchQuote);
-    const stock = get(stockState);
-    const {buy, sell} = get(buySellState);
-    return (buy ? Math.floor(cash/price) : (sell ? stock : 0))
-  }
-});
 
 const isTimeToTrade = selector({
   key: 'isTimeToTrade',
@@ -140,44 +125,65 @@ export default function App() {
   return (
     <RecoilRoot>
       <div className="App">
-        <ExperimentDisplay />
+        <Experiment />
       </div>
     </RecoilRoot>
   );
 }
 
-const ExperimentDisplay = () => {
-  const [nowIdx, setNowIdx] = useRecoilState(nowIdxState);
-  const [expPause, setExpPause] = useRecoilState(expPauseState);
+
+const Experiment = () => {
+  const [expPause, setExpPause] = useState(true);
   const setExpStartTime = useSetRecoilState(expStartTimeState);
-  const timeInterval = useRecoilValue(intervalMultiplierState);
-  const isTradeTime = useRecoilValue(isTimeToTrade);
 
-  useEffect(() => {
-      // pause at T1 or T2. mkt is unpaused when trade is submitted.
-      if (isTradeTime) setExpPause(true);
-
-      // increment `nowIdx` every 1000ms if market is unpaused
-      const interval = setInterval(() => {
-          if (!expPause) setNowIdx(nowIdx + timeInterval);            
-      }, timeInterval * 1000);
-      console.log("now", nowIdx);
-
-      return () => { clearInterval(interval); };
-  });
-
+  console.log('<experiment>')
   return (
     <div className="App-container">
       <Modal />
-      <MarketScreen />
+      <ExperimentInterface isWalkthrough={expPause} setExpPause={setExpPause}/>
       <button id="start-exp" 
         className="btn" 
         onClick={() => {
           setExpPause(false); 
           setExpStartTime(Math.round(Date.now()/1000));
         }}
-        disabled={nowIdx}>Start</button>
+        disabled={!expPause}>Start
+      </button>
+      <StateManager expPause={expPause} setExpPause={setExpPause}/>
     </div>
+  );
+}
+
+
+const StateManager = ({expPause, setExpPause}) => {
+  const [nowIdx, setNowIdx] = useRecoilState(nowIdxState);
+  const {T1, T2} = useRecoilValue(configState)
+  const timeInterval = useRecoilValue(intervalMultiplierState);
+  console.log("<statemanager> now", nowIdx);
+
+
+  useEffect(() => {
+      // increment `nowIdx` every 1000ms if market is unpaused
+      const interval = setInterval(() => {
+          if (!expPause) setNowIdx(nowIdx + timeInterval);            
+      }, timeInterval * 1000);
+
+      return () => { clearInterval(interval); console.log('cleared');};
+  });
+
+  useEffect(() => {
+    if (nowIdx === T1 || nowIdx === T2) {
+      setExpPause(true);
+      console.log("<statemanager> exp now paused!");
+    }
+    else if (nowIdx > 1) {
+      setExpPause(false);
+      console.log("<statemanager> exp now resumes!");
+    }
+  });
+
+  return (
+    <div />
   );
 };
 
@@ -205,23 +211,14 @@ const Modal = () => {
 };
 
 
-const MarketScreen = () => {
-  const nowIdx = useRecoilValue(nowIdxState);
-  const isWalkthrough = (nowIdx === 0);
-
+const ExperimentInterface = ({setExpPause}) => {
   return (
     <div>
       <Walkthrough />
-      <div className="market-screen">
-        <Suspense fallback={<div>Loading...</div>}>
-          <StockDisplay />
-          <TradeCenter isWalkthrough={isWalkthrough} />
-        </Suspense>
-      </div>
+      <MarketScreen setExpPause={setExpPause}/>
     </div>
   ); 
 };
-
 
 const Walkthrough = () => {
   const walkthroughSteps = [
@@ -313,28 +310,40 @@ const Walkthrough = () => {
 };
 
 
-const StockDisplay = () => {
-  const price0 = useRecoilValue(configState).price0;
-  const {price, prevPrice} = useRecoilValue(fetchQuote)
+const MarketScreen = ({setExpPause}) => {
+  const {prev: prevPrice, curr: price} = useRecoilValueLoadable(fetchSingleQuote);
+  // const [price, setPrice] = useState(0);
+  // const[prevPrice, setPrev] = useState(0);
+  // fetch(API_URL + '/get').then(data => data.json()).then(data => {setPrice(data['curr']); setPrev(data['prev'])});
   const priceDiff = (prevPrice ? Math.round((price - prevPrice + Number.EPSILON) * 100) / 100 : 0);
+
+  return (
+    <div className="market-screen">
+      <StockDisplay price={price} priceDiff={priceDiff}/>
+      <TradeCenter currentPrice={price} prevPrice={prevPrice} setExpPause={setExpPause}/>
+  </div>
+  );
+};
+
+
+
+
+const StockDisplay = ({price, priceDiff}) => {
+  const price0 = useRecoilValue(configState).price0;
+  
 
   const TitleBar = () => {
     return (
       <div className="titleContainer" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 3fr', gridGap: 5}}>
         <h1 className="tickerName">USD/MRS</h1>
-        <Ticker type='bold' curr={price} diff={priceDiff}/>,
+        <Ticker type='bold' curr={price} diff={priceDiff}/>
       </div>
     );
   };
 
   const StockChart = () => {
     const config = useRecoilValue(configState);
-    // const {labels_http, quotes_http} = useRecoilValue(fetchQuoteSlice);
-    const {labels, quotes} = useRecoilValue(fetchQuoteSlice);
-    
-    // const [labels, setLabels] = useState([])
-    // const [quotes, setQuotes] = useState([])
-
+    const {labels, quotes} = useRecoilValueLoadable(fetchQuoteSlice).contents;
     
     const chartMeta = {
       labels: labels,
@@ -411,33 +420,37 @@ const StockDisplay = () => {
 };
 
 
-const TradeCenter = ({isWalkthrough}) => {
-  const [expPause, setExpPause] = useRecoilState(expPauseState);
+const TradeCenter = ({currentPrice, prevPrice, setExpPause}) => { 
+  // console.log("<tradecenter> ", currentPrice);
+  const isTradeTime = useRecoilValue(isTimeToTrade);
+
 
   const StatusMessage = () => 
     <h2 id='status-message'>
-      {(expPause ? 'Enter a trade' : 'Observe the market')}
+      {(isTradeTime ? 'Enter a trade' : 'Observe the market')}
     </h2>;
-
 
   const TradingPanel = () => {
     const [qty, setQty] = useState(0);
     const [{buy, sell}, setBuySell] = useRecoilState(buySellState);
     const [cash, setCash] = useRecoilState(cashState);
     const [stock, setStock] = useRecoilState(stockState);
-    const {currentPrice, prevPrice} = useRecoilValue(fetchQuote)
-    const maxQty = useRecoilState(selectMaxQty);
-
-    const maxQtyStatus = () => (
+    const setNowIdxState = useSetRecoilState(nowIdxState);
+    
+    
+    const maxQty = () => (buy ? Math.floor(cash/currentPrice) : (sell ? stock : 0));
+    // console.log("<tradingpanel> ", currentPrice, maxQty());
+    
+    const maxQtyStatus = (currentPrice) => (
       buy || sell ?
-      'Stocks available for  ' + (sell ? 'sale' : 'purchase') + ': ' + maxQty :
+      'Stocks available for  ' + (sell ? 'sale' : 'purchase') + ': ' + maxQty() :
       ''
     );
 
     const yourTradeStatus = () => {
       const action = buy ? 'Buy ': (sell ? 'Sell ' : null);
       const status = action !== null ? action + qty + ' stocks' : '-';
-      return (expPause ? "Your trade: " + status : '');
+      return (isTradeTime ? "Your trade: " + status : '');
     };
 
     const handleSubmit = () => {
@@ -448,27 +461,13 @@ const TradeCenter = ({isWalkthrough}) => {
       setCash(nextCash);
       setStock(nextStock);
       setBuySell({buy:false, sell: false});
-      setExpPause(false);
-    };
-
-    const ValidatedInput = () => {
-      return (
-        <div className='inputBox'>
-          <label htmlFor='in'>No. of Stocks: </label>
-          <input
-            type='number'
-            placeholder={0}
-            min={0}
-            max={maxQty}
-            onChange={(e) => {setQty(parseInt(e.target.value));}}
-            disabled={!expPause}
-            onKeyDown={(e) => {e.preventDefault();}}
-          />
-        </div>
-      );
+      setNowIdxState(now => now + 1); // TODO change to timeInterval
+      // setExpPause(false);
+      // console.log('resuming experiment');
     };
 
     const BuySellB = () => {
+      
       const handleClickBuy = () => {
         setBuySell({buy: !buy, sell: false});
       };
@@ -487,17 +486,31 @@ const TradeCenter = ({isWalkthrough}) => {
       );
     }
 
+    const inputBox = () => (
+      <div className='inputBox'>
+        <label htmlFor='in'>No. of Stocks: </label>
+        <input
+          type='number'
+          min={0}
+          max={maxQty()}
+          onChange={(e) => setQty(parseInt(e.target.value))}
+          disabled={!isTradeTime}
+          onKeyDown={(e) => {e.preventDefault();}}
+        />
+      </div>
+    );
+
     return (
       <div style={{alignSelf: 'center'}}>
-        {maxQtyStatus}
+        {maxQtyStatus(currentPrice)}
         <fieldset className="panel">
           <div className="content" style={{marginTop: '10px'}}>
             <div className="input" style={{marginBottom: '30px'}}>
               <BuySellB />
-              <ValidatedInput />
+              {inputBox()}
             </div>
-            {yourTradeStatus}
-            <button className="btn submit" disabled={!expPause} onClick={handleSubmit}>SUBMIT</button>
+            {yourTradeStatus()}
+            <button className="btn submit" disabled={!isTradeTime} onClick={handleSubmit}>SUBMIT</button>
           </div>
         </fieldset>
       </div>
@@ -505,7 +518,6 @@ const TradeCenter = ({isWalkthrough}) => {
   };
 
   const StatusTable = () => {
-    const {currentPrice, prevPrice} = useRecoilValue(fetchQuote)
     const stock = useRecoilValue(stockState);
     const cash = useRecoilValue(cashState);
     const cashRound = Math.round(cash*100)/100;
@@ -542,12 +554,11 @@ const TradeCenter = ({isWalkthrough}) => {
   };
 
   return (
-    <div style={isWalkthrough ? {pointerEvents: "none"} : {display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
-      <Suspense fallback={<div>Loading...</div>}>
+    // <div style={isWalkthrough ? {pointerEvents: "none"} : {display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
+    <div style={{display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
       <StatusMessage />
       <TradingPanel />
-        <StatusTable />
-      </Suspense>
+      <StatusTable />
     </div>
   );
 };
