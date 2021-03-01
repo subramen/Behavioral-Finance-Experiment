@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
     RecoilRoot,
     atom,
@@ -51,8 +51,10 @@ const configState =  atom({
 
 const fetchSingleQuote = selector({
   key: 'fetchSingleQuote',
-  get: async () => {
+  get: async ({get}) => {
+    get(nowIdxState);
     const response = await fetch(API_URL + '/get').then(data => data.json());
+    console.log('response ', response);
     return response;
   }
 })
@@ -215,7 +217,9 @@ const ExperimentInterface = ({setExpPause}) => {
   return (
     <div>
       <Walkthrough />
-      <MarketScreen setExpPause={setExpPause}/>
+      <Suspense fallback={setTimeout(() => <div>Loading...</div>, 1500)}>
+        <MarketScreen setExpPause={setExpPause}/>
+      </Suspense>
     </div>
   ); 
 };
@@ -311,11 +315,11 @@ const Walkthrough = () => {
 
 
 const MarketScreen = ({setExpPause}) => {
-  const {prev: prevPrice, curr: price} = useRecoilValueLoadable(fetchSingleQuote);
   // const [price, setPrice] = useState(0);
   // const[prevPrice, setPrev] = useState(0);
-  // fetch(API_URL + '/get').then(data => data.json()).then(data => {setPrice(data['curr']); setPrev(data['prev'])});
+  const {prev: prevPrice, curr: price} = useRecoilValueLoadable(fetchSingleQuote).contents;//getValue();
   const priceDiff = (prevPrice ? Math.round((price - prevPrice + Number.EPSILON) * 100) / 100 : 0);
+  
 
   return (
     <div className="market-screen">
