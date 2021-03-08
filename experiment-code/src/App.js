@@ -14,17 +14,17 @@ import Countdown from './components/timer'
 import Joyride from 'react-joyride';
 import {Line} from 'react-chartjs-2';
 import './App.css';
-import { max } from 'moment';
+import { max, now } from 'moment';
 
 const API_URL = 'http://localhost:5000';
 
 const expStartTimeState = atom({
   key: 'expStartTS',
-  default: 0,
+  default: Date.now(),
 })
 const intervalMultiplierState = atom({
   key: 'intervalMultiplierState',
-  default: 1,
+  default: 5,
 })
 const nowIdxState = atom({
     key: 'nowIdxState', 
@@ -56,28 +56,61 @@ const fetchSingleQuote = selector({
     const response = await fetch(API_URL + '/get').then(data => data.json());
     console.log('response ', response);
     return response;
+  },
+});
+
+const dataList = atom({
+  key: 'dataList',
+  default: {
+    "labels": [],
+    "quotes": []
+  },
+});
+
+const selectDataList = selector({
+  key: 'selectData',
+  get: ({get}) => {
+    // const {labels, quotes} = get(dataList);
+    return get(dataList);
+  },
+  set: ({get, set}, [currentTS, currentPrice]) => {
+    // const {prev, curr} = get(fetchSingleQuote); // replace with newVal
+    const {labels, quotes} = get(dataList);
+    console.log("<selectdatalist>", currentTS, currentPrice);
+    const newObj = {"labels": [...labels, currentTS], "quotes": [...quotes, currentPrice]}; 
+    set(dataList, newObj);
   }
 })
 
-const fetchQuoteSlice = selector({
-  key: 'fetchQuoteSliceSelector',
-  get: async ({get}) => {
-    const expStartTS = get(expStartTimeState);
-    const multiplier = get(intervalMultiplierState);
-    const nowIdx = get(nowIdxState);
-    let data = {"labels": [], "quotes": []};
-    try {
-      if (expStartTS > 0) {
-        const response = await fetch(API_URL + '/slice/' + 
-        expStartTS + '/' + (expStartTS + nowIdx * multiplier));
-        data = await response.json();
-      }
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-});
+
+// const fetchQuoteSlice = selector({
+//   key: 'fetchQuoteSliceSelector',
+//   get: async ({get}) => {
+//     const expStartTS = get(expStartTimeState);
+//     const nowIdx = get(nowIdxState);
+//     let data = {"labels": [], "quotes": []};
+
+//     try {
+//       // if (nowIdx == 0) {
+//       const curr = get(fetchSingleQuote)['curr'];
+//       console.log(curr);
+//       // data = {"labels": [expStartTS], "quotes": [curr]};
+//       data = {"labels": [...data["labels"], curr[0]], "quotes": [...data["quotes"], curr[1]]}
+//         // console.log('fetchquoteslice init response', data);
+//       // }
+//       // else if (nowIdx > 0) {
+//       //   console.log('firing fetchquoteslice', Date.now());
+//       //   const response = await fetch(API_URL + '/slice/' + 
+//       //   expStartTS + '/' + (expStartTS + nowIdx)); // * multiplier));
+//       //   data = await response.json();
+//       //   console.log('received response', Date.now());
+//       // }
+//       return data;
+//     } catch (error) {
+//       throw error;
+//     }
+//   }
+// });
 
 
 // State atoms 
@@ -160,12 +193,13 @@ const Experiment = () => {
 const StateManager = ({expPause, setExpPause}) => {
   const [nowIdx, setNowIdx] = useRecoilState(nowIdxState);
   const {T1, T2} = useRecoilValue(configState)
+  const isTradeTime = useRecoilValue(isTimeToTrade);
   const timeInterval = useRecoilValue(intervalMultiplierState);
-  console.log("<statemanager> now", nowIdx);
+  console.log("<statemanager> now", nowIdx, "exp pause", expPause);
 
 
   useEffect(() => {
-      // increment `nowIdx` every 1000ms if market is unpaused
+      // increment `nowIdx` every timeInterval s if market is unpaused
       const interval = setInterval(() => {
           if (!expPause) setNowIdx(nowIdx + timeInterval);            
       }, timeInterval * 1000);
@@ -174,8 +208,9 @@ const StateManager = ({expPause, setExpPause}) => {
   });
 
   useEffect(() => {
-    if (nowIdx === T1 || nowIdx === T2) {
-      setExpPause(true);
+    // if (nowIdx === T1 || nowIdx === T2) {
+    if (isTradeTime) {
+    setExpPause(true);
       console.log("<statemanager> exp now paused!");
     }
     else if (nowIdx > 1) {
@@ -315,42 +350,69 @@ const Walkthrough = () => {
 
 
 const MarketScreen = ({setExpPause}) => {
-  // const [price, setPrice] = useState(0);
-  // const[prevPrice, setPrev] = useState(0);
-  const {prev: prevPrice, curr: price} = useRecoilValueLoadable(fetchSingleQuote).contents;//getValue();
-  const priceDiff = (prevPrice ? Math.round((price - prevPrice + Number.EPSILON) * 100) / 100 : 0);
+  const quoteLoadable= useRecoilValueLoadable(fetchSingleQuote);
+  const updateDataList = useSetRecoilState(selectDataList);
+  let prevTS, currentTS, currentPrice, prevPrice;
   
+  useEffect(() => {
+    if (quoteLoadable.state === 'hasValue') {
+      const {prev, curr} = quoteLoadable.contents;
+      currentTS = curr[0];
+      prevTS = prev[0];
+      currentPrice = curr[1];
+      prevPrice = prev[1];
+    }
+    
+    if (currentPrice && currentTS) {
+      console.log("<market screen> update", currentTS, currentPrice);
+      updateDataList([currentTS, currentPrice]);
+    }
+    else {
+      console.log("<market screen> no op", currentPrice, currentTS);
+    }
+  }, [quoteLoadable]);
 
+  useEffect(() => {
+    // if (currentPrice && currentTS) {
+    //   console.log("<market screen> update", currentTS, currentPrice);
+    //   updateDataList([currentTS, currentPrice]);
+    // }
+    // else {
+    //   console.log("<market screen> no op", currentPrice, currentTS);
+    // }
+  });
+  
   return (
     <div className="market-screen">
-      <StockDisplay price={price} priceDiff={priceDiff}/>
-      <TradeCenter currentPrice={price} prevPrice={prevPrice} setExpPause={setExpPause}/>
-  </div>
+      <StockDisplay currentPrice={currentPrice} prevPrice={prevPrice} prevTS={prevTS} currentTS={currentTS}/>
+      <TradeCenter currentPrice={currentPrice} prevPrice={prevPrice} setExpPause={setExpPause}/>
+    </div>
   );
 };
 
 
 
 
-const StockDisplay = ({price, priceDiff}) => {
+const StockDisplay = ({prevTS, currentTS, currentPrice, prevPrice}) => {
   const price0 = useRecoilValue(configState).price0;
-  
+  const priceDiff = (prevPrice ? Math.round((currentPrice - prevPrice + Number.EPSILON) * 100) / 100 : 0);
 
   const TitleBar = () => {
     return (
       <div className="titleContainer" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 3fr', gridGap: 5}}>
         <h1 className="tickerName">USD/MRS</h1>
-        <Ticker type='bold' curr={price} diff={priceDiff}/>
+        <Ticker type='bold' curr={currentPrice} diff={priceDiff}/>
       </div>
     );
   };
 
   const StockChart = () => {
     const config = useRecoilValue(configState);
-    const {labels, quotes} = useRecoilValueLoadable(fetchQuoteSlice).contents;
-    
+    const {labels, quotes} = useRecoilValue(selectDataList);
+    console.log('<stockchart2> ', labels, quotes);
+
     const chartMeta = {
-      labels: labels,
+      labels: [...labels],
       datasets: [
         {
           fill: false,
@@ -358,7 +420,7 @@ const StockDisplay = ({price, priceDiff}) => {
           backgroundColor: 'rgba(75,192,192,1)',
           borderColor: 'rgba(0,0,0,1)',
           borderWidth: 2,
-          data: quotes,
+          data: [...quotes],
         },
       ],
       lineColor: 'black',
@@ -414,9 +476,9 @@ const StockDisplay = ({price, priceDiff}) => {
     <div className="priceTracker">
       <TitleBar />
       <span style={{display: 'grid'}}>
-        <StockChart />
+        <StockChart currentPrice={currentPrice} currentTS={currentTS}/>
         <span className='deltaOverlay'>
-          <Ticker type='percent' curr={price} diff={price - price0}/>
+          <Ticker type='percent' curr={currentPrice} diff={currentPrice - price0}/>
         </span>
       </span>
     </div>

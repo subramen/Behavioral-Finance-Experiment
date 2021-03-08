@@ -89,7 +89,7 @@ def get_curr_prev_quote():
     except ValueError as e:
         logger.error(e)
         prev_qt, curr_qt = [(0,0), (0,0)]
-    return {'prev': prev_qt[1], 'curr': curr_qt[1]}
+    return {'prev': prev_qt, 'curr': curr_qt}
 
 
 @app.route("/slice/<start>/<end>")
