@@ -14,7 +14,6 @@ import Countdown from './components/timer'
 import Joyride from 'react-joyride';
 import {Line} from 'react-chartjs-2';
 import './App.css';
-import { max, now } from 'moment';
 
 const API_URL = 'http://localhost:5000';
 
@@ -31,21 +30,19 @@ const nowIdxState = atom({
     default: 0, 
 });
 
-const expPauseState = atom({
-    key: 'expPauseState',
-    default: true,
-})
-
-const configState =  atom({
+const configState =  selector({
   key: 'configState',
-  default: {
-    T1: 10,
-    T2: 100,
-    TN: 300,
-    WC: false,
-    price0: 0,
-    initCash: 1000,
-  }
+  get: ({get}) => {
+    const intervalMultiplier = get(intervalMultiplierState);
+    return {
+      T1: 2 * intervalMultiplier,
+      T2: 8 * intervalMultiplier,
+      TN: 10 * intervalMultiplier,
+      WC: false,
+      price0: 0,
+      initCash: 1000,
+    };
+  },
 });
 
 
@@ -54,7 +51,6 @@ const fetchSingleQuote = selector({
   get: async ({get}) => {
     get(nowIdxState);
     const response = await fetch(API_URL + '/get').then(data => data.json());
-    console.log('response ', response);
     return response;
   },
 });
@@ -70,51 +66,19 @@ const dataList = atom({
 const selectDataList = selector({
   key: 'selectData',
   get: ({get}) => {
-    // const {labels, quotes} = get(dataList);
     return get(dataList);
   },
   set: ({get, set}, [currentTS, currentPrice]) => {
-    // const {prev, curr} = get(fetchSingleQuote); // replace with newVal
-    const {labels, quotes} = get(dataList);
-    console.log("<selectdatalist>", currentTS, currentPrice);
-    const newObj = {"labels": [...labels, currentTS], "quotes": [...quotes, currentPrice]}; 
-    set(dataList, newObj);
+    if (currentTS && currentPrice) {
+      const {labels, quotes} = get(dataList);
+      const newObj = {"labels": [...labels, currentTS], "quotes": [...quotes, currentPrice]}; 
+      set(dataList, newObj);
+    }
   }
 })
 
 
-// const fetchQuoteSlice = selector({
-//   key: 'fetchQuoteSliceSelector',
-//   get: async ({get}) => {
-//     const expStartTS = get(expStartTimeState);
-//     const nowIdx = get(nowIdxState);
-//     let data = {"labels": [], "quotes": []};
-
-//     try {
-//       // if (nowIdx == 0) {
-//       const curr = get(fetchSingleQuote)['curr'];
-//       console.log(curr);
-//       // data = {"labels": [expStartTS], "quotes": [curr]};
-//       data = {"labels": [...data["labels"], curr[0]], "quotes": [...data["quotes"], curr[1]]}
-//         // console.log('fetchquoteslice init response', data);
-//       // }
-//       // else if (nowIdx > 0) {
-//       //   console.log('firing fetchquoteslice', Date.now());
-//       //   const response = await fetch(API_URL + '/slice/' + 
-//       //   expStartTS + '/' + (expStartTS + nowIdx)); // * multiplier));
-//       //   data = await response.json();
-//       //   console.log('received response', Date.now());
-//       // }
-//       return data;
-//     } catch (error) {
-//       throw error;
-//     }
-//   }
-// });
-
-
 // State atoms 
-
 const cashState = atom({
   key:'cashState',
   default: 1000,
@@ -133,6 +97,11 @@ const buySellState = atom({
   }
 });
 
+const inputQty = atom({
+  key: 'inputQtyState',
+  default: 0,
+})
+
 
 const isTimeToTrade = selector({
   key: 'isTimeToTrade',
@@ -140,20 +109,12 @@ const isTimeToTrade = selector({
     const nowIdx = get(nowIdxState);
     const T1 = get(configState).T1;
     const T2 = get(configState).T2;
-    return (nowIdx === T1 || nowIdx === T2);
+    const intervalMultiplier = get(intervalMultiplierState);
+    // give them 15 secs to trade
+    return ((T1 <= nowIdx && nowIdx < T1 + 3*intervalMultiplier) || (T2 <= nowIdx && nowIdx < T2 + 3*intervalMultiplier));
   }
 });
 
-const showWatercoolerModal = selector({
-  key: 'showWC',
-  get: ({get}) => {
-    const nowIdx = get(nowIdxState);
-    const T1 = get(configState).T1;
-    const T2 = get(configState).T2;
-    const WC = get(configState).WC;
-    return (WC && T1 < nowIdx && nowIdx <T2);
-  }
-});
 
 
 export default function App() {
@@ -171,11 +132,10 @@ const Experiment = () => {
   const [expPause, setExpPause] = useState(true);
   const setExpStartTime = useSetRecoilState(expStartTimeState);
 
-  console.log('<experiment>')
   return (
     <div className="App-container">
       <Modal />
-      <ExperimentInterface isWalkthrough={expPause} setExpPause={setExpPause}/>
+      <ExperimentInterface />
       <button id="start-exp" 
         className="btn" 
         onClick={() => {
@@ -184,39 +144,25 @@ const Experiment = () => {
         }}
         disabled={!expPause}>Start
       </button>
-      <StateManager expPause={expPause} setExpPause={setExpPause}/>
+      <StateManager expPause={expPause}/>
     </div>
   );
 }
 
 
-const StateManager = ({expPause, setExpPause}) => {
+const StateManager = ({expPause}) => {
   const [nowIdx, setNowIdx] = useRecoilState(nowIdxState);
-  const {T1, T2} = useRecoilValue(configState)
-  const isTradeTime = useRecoilValue(isTimeToTrade);
-  const timeInterval = useRecoilValue(intervalMultiplierState);
+  const { TN } = useRecoilValue(configState)
+  const intervalMultiplier = useRecoilValue(intervalMultiplierState);
   console.log("<statemanager> now", nowIdx, "exp pause", expPause);
 
-
   useEffect(() => {
-      // increment `nowIdx` every timeInterval s if market is unpaused
+      // increment `nowIdx` every intervalMultiplier s if market is unpaused
       const interval = setInterval(() => {
-          if (!expPause) setNowIdx(nowIdx + timeInterval);            
-      }, timeInterval * 1000);
+          if (nowIdx < TN) setNowIdx(nowIdx + intervalMultiplier);            
+      }, intervalMultiplier * 1000);
 
-      return () => { clearInterval(interval); console.log('cleared');};
-  });
-
-  useEffect(() => {
-    // if (nowIdx === T1 || nowIdx === T2) {
-    if (isTradeTime) {
-    setExpPause(true);
-      console.log("<statemanager> exp now paused!");
-    }
-    else if (nowIdx > 1) {
-      setExpPause(false);
-      console.log("<statemanager> exp now resumes!");
-    }
+      return () => clearInterval(interval);
   });
 
   return (
@@ -227,7 +173,13 @@ const StateManager = ({expPause, setExpPause}) => {
 
 
 const Modal = () => {
-  const showWC = useRecoilValue(showWatercoolerModal);
+  const nowIdx = useRecoilValue(nowIdxState);
+  const intervalMultiplier = useRecoilValue(intervalMultiplierState);
+  const {T1, T2, TN, WC } = useRecoilValue(configState)
+  
+  const showWC = (WC && T1 + 3*intervalMultiplier <= nowIdx && nowIdx < T2);
+  const endExp = (nowIdx === TN);
+
   const watercoolerModal = (
     <div className="modal-backdrop">
       <div className="modal-content">
@@ -243,17 +195,25 @@ const Modal = () => {
       </div>
     </div>
   );
+
+  const endModal = (
+    <div className="modal-backdrop">
+      <div className="modal-content">
+          <h1>Experiment over</h1>
+      </div>
+    </div>
+  );
   
-  return (showWC ? watercoolerModal : null);
+  return (showWC ? watercoolerModal : (endExp ? endModal : null));
 };
 
 
-const ExperimentInterface = ({setExpPause}) => {
+const ExperimentInterface = () => {
   return (
     <div>
       <Walkthrough />
       <Suspense fallback={setTimeout(() => <div>Loading...</div>, 1500)}>
-        <MarketScreen setExpPause={setExpPause}/>
+        <MarketScreen />
       </Suspense>
     </div>
   ); 
@@ -349,43 +309,29 @@ const Walkthrough = () => {
 };
 
 
-const MarketScreen = ({setExpPause}) => {
+const MarketScreen = () => {
   const quoteLoadable= useRecoilValueLoadable(fetchSingleQuote);
   const updateDataList = useSetRecoilState(selectDataList);
-  let prevTS, currentTS, currentPrice, prevPrice;
+  const [prevCurr, setPrevCurr] = useState({});
   
   useEffect(() => {
     if (quoteLoadable.state === 'hasValue') {
       const {prev, curr} = quoteLoadable.contents;
-      currentTS = curr[0];
-      prevTS = prev[0];
-      currentPrice = curr[1];
-      prevPrice = prev[1];
+      setPrevCurr({
+        "currentTS": curr[0],
+        "prevTS": prev[0],
+        "currentPrice": curr[1],
+        "prevPrice": prev[1]
+      });
     }
-    
-    if (currentPrice && currentTS) {
-      console.log("<market screen> update", currentTS, currentPrice);
-      updateDataList([currentTS, currentPrice]);
-    }
-    else {
-      console.log("<market screen> no op", currentPrice, currentTS);
-    }
-  }, [quoteLoadable]);
+  }, [quoteLoadable]);  
 
-  useEffect(() => {
-    // if (currentPrice && currentTS) {
-    //   console.log("<market screen> update", currentTS, currentPrice);
-    //   updateDataList([currentTS, currentPrice]);
-    // }
-    // else {
-    //   console.log("<market screen> no op", currentPrice, currentTS);
-    // }
-  });
+  useEffect(() => updateDataList([prevCurr["currentTS"], prevCurr["currentPrice"]]), [prevCurr]);
   
   return (
     <div className="market-screen">
-      <StockDisplay currentPrice={currentPrice} prevPrice={prevPrice} prevTS={prevTS} currentTS={currentTS}/>
-      <TradeCenter currentPrice={currentPrice} prevPrice={prevPrice} setExpPause={setExpPause}/>
+      <StockDisplay prevCurr={prevCurr} />
+      <TradeCenter prevCurr={prevCurr} />
     </div>
   );
 };
@@ -393,7 +339,7 @@ const MarketScreen = ({setExpPause}) => {
 
 
 
-const StockDisplay = ({prevTS, currentTS, currentPrice, prevPrice}) => {
+const StockDisplay = ({prevCurr: {currentTS, currentPrice, prevPrice}} ) => {
   const price0 = useRecoilValue(configState).price0;
   const priceDiff = (prevPrice ? Math.round((currentPrice - prevPrice + Number.EPSILON) * 100) / 100 : 0);
 
@@ -409,7 +355,6 @@ const StockDisplay = ({prevTS, currentTS, currentPrice, prevPrice}) => {
   const StockChart = () => {
     const config = useRecoilValue(configState);
     const {labels, quotes} = useRecoilValue(selectDataList);
-    console.log('<stockchart2> ', labels, quotes);
 
     const chartMeta = {
       labels: [...labels],
@@ -486,50 +431,43 @@ const StockDisplay = ({prevTS, currentTS, currentPrice, prevPrice}) => {
 };
 
 
-const TradeCenter = ({currentPrice, prevPrice, setExpPause}) => { 
-  // console.log("<tradecenter> ", currentPrice);
+const TradeCenter = ({prevCurr: {currentPrice, prevPrice}}) => { 
   const isTradeTime = useRecoilValue(isTimeToTrade);
-
 
   const StatusMessage = () => 
     <h2 id='status-message'>
-      {(isTradeTime ? 'Enter a trade' : 'Observe the market')}
+      {(isTradeTime ? 'Trading window: OPEN' : 'Trading window: CLOSED')}
     </h2>;
 
   const TradingPanel = () => {
-    const [qty, setQty] = useState(0);
+    const [qty, setQty] = useRecoilState(inputQty);
     const [{buy, sell}, setBuySell] = useRecoilState(buySellState);
     const [cash, setCash] = useRecoilState(cashState);
     const [stock, setStock] = useRecoilState(stockState);
-    const setNowIdxState = useSetRecoilState(nowIdxState);
+    const maxQty = buy ? Math.floor(cash/currentPrice) : (sell ? stock : 0);
     
-    
-    const maxQty = () => (buy ? Math.floor(cash/currentPrice) : (sell ? stock : 0));
-    // console.log("<tradingpanel> ", currentPrice, maxQty());
-    
-    const maxQtyStatus = (currentPrice) => (
+    const maxQtyStatus = 
       buy || sell ?
-      'Stocks available for  ' + (sell ? 'sale' : 'purchase') + ': ' + maxQty() :
-      ''
-    );
+      'Stocks available for  ' + (sell ? 'sale' : 'purchase') + ': ' + maxQty :
+      '';
 
     const yourTradeStatus = () => {
+      let qty0 = Math.min(qty, maxQty);
       const action = buy ? 'Buy ': (sell ? 'Sell ' : null);
-      const status = action !== null ? action + qty + ' stocks' : '-';
+      const status = action !== null ? action + qty0 + ' stocks' : '-';
       return (isTradeTime ? "Your trade: " + status : '');
     };
 
     const handleSubmit = () => {
+      let qty0 = Math.min(qty, maxQty);
       const nextCash = stats.precisionRound((
-        buy ? cash - (qty * currentPrice) :  cash + (qty * currentPrice)), 
+        buy ? cash - (qty0 * currentPrice) :  cash + (qty0 * currentPrice)), 
         2);
-      const nextStock = (buy ? stock + qty :  stock - qty);
+      const nextStock = (buy ? stock + qty0 :  stock - qty0);
       setCash(nextCash);
       setStock(nextStock);
       setBuySell({buy:false, sell: false});
-      setNowIdxState(now => now + 1); // TODO change to timeInterval
-      // setExpPause(false);
-      // console.log('resuming experiment');
+      setQty(0);
     };
 
     const BuySellB = () => {
@@ -552,28 +490,32 @@ const TradeCenter = ({currentPrice, prevPrice, setExpPause}) => {
       );
     }
 
-    const inputBox = () => (
+    const InputBox = () => {
+      const handleChange = (newval) => setQty(newval);
+
+      return (
       <div className='inputBox'>
         <label htmlFor='in'>No. of Stocks: </label>
         <input
           type='number'
           min={0}
-          max={maxQty()}
-          onChange={(e) => setQty(parseInt(e.target.value))}
+          value={qty}
+          onChange={(e) => handleChange(parseInt(e.target.value))}
           disabled={!isTradeTime}
           onKeyDown={(e) => {e.preventDefault();}}
         />
       </div>
-    );
+    )};
+    
 
     return (
       <div style={{alignSelf: 'center'}}>
-        {maxQtyStatus(currentPrice)}
+        {maxQtyStatus}
         <fieldset className="panel">
           <div className="content" style={{marginTop: '10px'}}>
             <div className="input" style={{marginBottom: '30px'}}>
               <BuySellB />
-              {inputBox()}
+              {InputBox()}
             </div>
             {yourTradeStatus()}
             <button className="btn submit" disabled={!isTradeTime} onClick={handleSubmit}>SUBMIT</button>
@@ -620,7 +562,6 @@ const TradeCenter = ({currentPrice, prevPrice, setExpPause}) => {
   };
 
   return (
-    // <div style={isWalkthrough ? {pointerEvents: "none"} : {display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
     <div style={{display: 'grid', gridTemplateRows: '1fr 4fr 3fr 2fr'}}>
       <StatusMessage />
       <TradingPanel />
@@ -628,6 +569,3 @@ const TradeCenter = ({currentPrice, prevPrice, setExpPause}) => {
     </div>
   );
 };
-
-
-
