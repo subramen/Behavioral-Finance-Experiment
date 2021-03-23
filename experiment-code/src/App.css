@@ -16,6 +16,10 @@ html,body{ margin:0; padding:0; height:100%; width:100%; }
   grid-row: 1;
 }
 
+.status-message {
+  display: grid;
+}
+
 .deltaOverlay {
   align-self: start;
   justify-self: start;

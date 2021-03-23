@@ -8,6 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import time
 import random
 from loguru import logger
+import json
 
 
 app = Flask(__name__)
@@ -16,21 +17,21 @@ INTERVAL = 5
 TS0 = -1
 TABLENAME = ''
 
-# url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes"
-# querystring = {"region":"US","symbols":"TSLA"}
-# headers = {
-#     'x-rapidapi-key': "57a6f99753mshf2f96c7d07b7f5fp1892c3jsn4bf4d977a411",
-#     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
-#     }
-# response = requests.request("GET", url, headers=headers, params=querystring)
-# print(response.text)
+URL = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes"
+HEADERS = {
+    'x-rapidapi-key': "57a6f99753mshf2f96c7d07b7f5fp1892c3jsn4bf4d977a411",
+    'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
+    }
+
 
 conn = sqlite3.connect('experiment.db', check_same_thread=False)
 
 
 def get_curr_quote():
-    logger.info(int(time.time()))
-    insert_db(int(time.time()), random.randint(2, 20))
+    # response = requests.request("GET", URL, headers=HEADERS, params={"region":"US","symbols":"TSLA"})
+    # d = json.loads(response.text)['quoteResponse']['result'][0]['regularMarketPrice']
+    d = random.randint(2, 20)
+    insert_db(int(time.time()), d)
 
 def create_db():
     logger.info(f"Creating table {TABLENAME}")
@@ -42,6 +43,7 @@ def create_db():
 def insert_db(ts, price):
     c = conn.cursor()
     c.execute(f"INSERT INTO {TABLENAME} VALUES (?, ?)", (ts, price))
+    logger.info(f"inserting {ts} {price}")
     conn.commit()
 
 
@@ -71,7 +73,7 @@ def get_ts_key(ts):
 
 def get_quote(ts):
     curr_ts = get_ts_key(ts)
-    logger.info(f'TS Key for ts={ts} | TS0]{TS0}: {curr_ts} ')
+    logger.info(f'TS Key for ts={ts} | TS0={TS0}: {curr_ts} ')
     prev_ts = curr_ts - INTERVAL
     if prev_ts < TS0:
         out = [(0, 0), select_db(curr_ts)]

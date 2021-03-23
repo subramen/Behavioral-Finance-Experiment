@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useCallback, useRef } from 'react';
 import {
     RecoilRoot,
     atom,
@@ -14,6 +14,10 @@ import Countdown from './components/timer'
 import Joyride from 'react-joyride';
 import {Line} from 'react-chartjs-2';
 import './App.css';
+// import { styled } from "@material-ui/core/styles";
+// import { spacing } from "@material-ui/system";
+// import MuiButton from "@material-ui/core/Button";
+// const Button = styled(MuiButton)(spacing)
 
 const API_URL = 'http://localhost:5000';
 
@@ -29,6 +33,11 @@ const nowIdxState = atom({
     key: 'nowIdxState', 
     default: 0, 
 });
+
+const amtID = atom({
+  key: 'amtID',
+  default: -1,
+})
 
 const configState =  selector({
   key: 'configState',
@@ -121,12 +130,41 @@ export default function App() {
   return (
     <RecoilRoot>
       <div className="App">
+        {/* <Intro /> */}
         <Experiment />
       </div>
     </RecoilRoot>
   );
 }
 
+
+const Intro = () => {
+  const [showIntro, setShowIntro] = useState(true);
+  const amtRef = useRef();
+  const setAMT = useSetRecoilState(amtID);
+  
+  const onClick = () => {
+    setAMT(amtRef.current);
+    setShowIntro(false);
+  }
+
+  return (
+    ( showIntro ? 
+      <div className="modal-backdrop">
+        <div className="modal-content">
+            <h1>Welcome!</h1>
+            <p>Some instructions here...</p>
+            <p>Get their details here...</p>
+            <input type="text" placeholder="AMT ID" onChange={(e) => { amtRef.current = e.target.value }}/>
+            <div className="btn-go">
+              <button onClick={onClick} px="45px" variant="contained" color="primary">Go</button>
+            </div>
+        </div>
+      </div>
+      : 
+      null)
+  );
+}
 
 const Experiment = () => {
   const [expPause, setExpPause] = useState(true);
@@ -157,7 +195,7 @@ const StateManager = ({expPause}) => {
   console.log("<statemanager> now", nowIdx, "exp pause", expPause);
 
   useEffect(() => {
-      // increment `nowIdx` every intervalMultiplier s if market is unpaused
+      // increment `nowIdx` by every intervalMultiplier s 
       const interval = setInterval(() => {
           if (nowIdx < TN) setNowIdx(nowIdx + intervalMultiplier);            
       }, intervalMultiplier * 1000);
@@ -434,10 +472,22 @@ const StockDisplay = ({prevCurr: {currentTS, currentPrice, prevPrice}} ) => {
 const TradeCenter = ({prevCurr: {currentPrice, prevPrice}}) => { 
   const isTradeTime = useRecoilValue(isTimeToTrade);
 
-  const StatusMessage = () => 
-    <h2 id='status-message'>
-      {(isTradeTime ? 'Trading window: OPEN' : 'Trading window: CLOSED')}
-    </h2>;
+  const StatusMessage = useCallback(() => 
+    { let elt = null;
+      if (isTradeTime) {
+        elt = ( <div className='status-msg'>
+          <h2 id='msg'>Trading window: OPEN</h2>
+          <Countdown id='count' then = {Date.now() + 15000} />
+        </div> );
+      }
+      else {
+      elt = ( <div className='status-msg'>
+          <h2 id='msg'>Trading window: CLOSED</h2>
+        </div> );
+      }
+      
+      return elt;
+    }, [isTradeTime]);
 
   const TradingPanel = () => {
     const [qty, setQty] = useRecoilState(inputQty);
