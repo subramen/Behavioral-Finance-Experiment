@@ -11,7 +11,7 @@ from loguru import logger
 import json
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='build/', static_url_path='/')
 cors = CORS(app)
 
 TEST = True
@@ -48,14 +48,12 @@ def create_db():
 def insert_db(ts, price):
     c = conn.cursor()
     c.execute(f"INSERT INTO {TABLENAME} VALUES (?, ?)", (ts, price))
-    logger.info(f"inserting {ts} {price}")
     conn.commit()
 
 
 def select_db(idx: Union[int, tuple]):
     c = conn.cursor()
     if isinstance(idx, tuple):
-        logger.debug(f"SELECT * FROM {TABLENAME} WHERE ts BETWEEN {idx}")
         c.execute(f"SELECT * FROM {TABLENAME} WHERE ts BETWEEN ? AND ?", idx)
         return c.fetchall()
     else:
@@ -78,7 +76,6 @@ def get_ts_key(ts):
 
 def get_quote(ts):
     curr_ts = get_ts_key(ts)
-    logger.info(f'TS Key for ts={ts} | TS0={TS0}: {curr_ts} ')
     prev_ts = curr_ts - INTERVAL
     if prev_ts < TS0:
         out = [(0, 0), select_db(curr_ts)]
@@ -99,6 +96,10 @@ def get_curr_prev_quote():
     return {'prev': prev_qt, 'curr': curr_qt}
 
 
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
 @app.route("/slice/<start>/<end>")
 @cross_origin()
 def get_slice_quote(start, end):
@@ -110,7 +111,7 @@ def get_slice_quote(start, end):
         ts, prices = ([], [])
     return {'labels': ts, 'quotes': prices}
 
-
+@app.before_first_request
 def setup():
     global TABLENAME
     TABLENAME = f'quotes_{int(time.time())}'
