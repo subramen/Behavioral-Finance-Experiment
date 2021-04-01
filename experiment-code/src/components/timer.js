@@ -13,7 +13,7 @@ export default class Countdown extends React.Component {
 	componentDidMount() {
 		this.interval = setInterval(() => {
 			const then = this.props.then;
-			const now = moment();
+			const now = Date.now();
 			const countdown = moment(then - now);
 			const days = countdown.format('D');
 			const hours = countdown.format('HH');
