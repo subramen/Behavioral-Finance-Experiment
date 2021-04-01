@@ -155,7 +155,10 @@ const Intro = ({setAMZN}) => {
       <div className="modal-backdrop">
         <div className="modal-content">
             <h1>Welcome!</h1>
-            <p>Some instructions here...</p>
+            <p>Observe the market. When the Trading Window opens you will have 15 seconds 
+              to place a trade. After that, you will take a break from the market. When you return,
+              there will be another trading window of 15 seconds. Make sure you place the trade you want
+              before the 15 seconds are up.</p>
             <span>
               <p>Get their details here...</p>
               <input type="text" placeholder="AMT ID" onChange={(e) => { amznRef.current = e.target.value }}/>
