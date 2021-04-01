@@ -13,10 +13,12 @@ import json
 
 app = Flask(__name__)
 cors = CORS(app)
+
+TEST = True
+
 INTERVAL = 5
 TS0 = -1
 TABLENAME = ''
-
 URL = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes"
 HEADERS = {
     'x-rapidapi-key': "57a6f99753mshf2f96c7d07b7f5fp1892c3jsn4bf4d977a411",
@@ -24,13 +26,16 @@ HEADERS = {
     }
 
 
-conn = sqlite3.connect('experiment.db', check_same_thread=False)
+conn = sqlite3.connect('yfinance.db', check_same_thread=False)
+# conn = sqlite3.connect('users.db')
 
 
 def get_curr_quote():
-    # response = requests.request("GET", URL, headers=HEADERS, params={"region":"US","symbols":"TSLA"})
-    # d = json.loads(response.text)['quoteResponse']['result'][0]['regularMarketPrice']
-    d = random.randint(2, 20)
+    if TEST:
+        d = random.randint(2, 20)
+    else:
+        response = requests.request("GET", URL, headers=HEADERS, params={"region":"US","symbols":"TSLA"})
+        d = json.loads(response.text)['quoteResponse']['result'][0]['regularMarketPrice']
     insert_db(int(time.time()), d)
 
 def create_db():

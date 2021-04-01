@@ -13,7 +13,7 @@ import { stats } from './stats'
 import Countdown from './components/timer'
 import Joyride from 'react-joyride';
 import {Line} from 'react-chartjs-2';
-import './App2.css';
+import './App.css';
 
 
 
@@ -156,10 +156,12 @@ const Intro = ({setAMZN}) => {
         <div className="modal-content">
             <h1>Welcome!</h1>
             <p>Some instructions here...</p>
-            <p>Get their details here...</p>
-            <input type="text" placeholder="AMT ID" onChange={(e) => { amznRef.current = e.target.value }}/>
-            <div className="btn-go">
-              <button onClick={onClick} px="45px" variant="contained" color="primary">Go</button>
+            <span>
+              <p>Get their details here...</p>
+              <input type="text" placeholder="AMT ID" onChange={(e) => { amznRef.current = e.target.value }}/>
+            </span>
+            <div>
+              <button className="btn" onClick={onClick} px="45px" variant="contained" color="primary">Go</button>
             </div>
         </div>
       </div>
