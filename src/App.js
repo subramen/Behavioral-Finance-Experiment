@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     RecoilRoot,
     atom,
@@ -65,7 +65,8 @@ const dataList = atom({
   key: 'dataList',
   default: {
     "labels": [],
-    "quotes": []
+    "quotes": [],
+    "timestamps": []
   },
 });
 
@@ -76,8 +77,17 @@ const selectDataList = selector({
   },
   set: ({get, set}, [currentTS, currentPrice]) => {
     if (currentTS && currentPrice) {
-      const {labels, quotes} = get(dataList);
-      const newObj = {"labels": [...labels, currentTS], "quotes": [...quotes, currentPrice]}; 
+      const {labels, quotes, timestamps} = get(dataList);
+      const padTime = (x) => x.toString().padStart(2, "0");
+      const d = new Date(currentTS * 1000);
+      const currentLabel = padTime(d.getHours()) + ":" + padTime(d.getMinutes()) + ":" + padTime(d.getSeconds());
+
+      const newObj = {
+        "labels": [...labels, currentLabel], 
+        "quotes": [...quotes, currentPrice], 
+        "timestamps": [...timestamps, currentTS]
+      }; 
+      console.log(currentTS, currentLabel);
       set(dataList, newObj);
     }
   }
@@ -141,54 +151,6 @@ export default function App() {
 }
 
 
-const Intro = ({setAMZN}) => {
-  const [showIntro, setShowIntro] = useState(true);
-  const amznRef = useRef();
-  
-  const onClick = () => {
-    setAMZN(amznRef.current);
-    setShowIntro(false);
-  }
-
-  return (
-    ( showIntro ? 
-      <div className="modal-backdrop">
-        <div className="modal-content" id="intro">
-            <h1>Welcome!</h1>
-            <div style={{textAlign:'left'}}>
-              <h2>Instructions</h2>
-              <p>This experiment attempts to study behaviors while trading
-              in the stock market. Please ensure you are undisturbed for the next N minutes, and trade 
-              seriously! If you make a profit, you stand to earn an additional bonus matching your profit.
-              At the end of the experiment, you will have a short questionnaire about your experience. </p>
-            </div>
-            <div style={{textAlign: 'left'}}>
-              <h2> Experiment Steps </h2>
-              <ul>
-                <li>The experiment will start with a walkthrough of the trading interface.</li>
-                <li>Initially, trading will be closed. Use this time to observe the market.</li>
-                <li>During the experiment, there will be 2 trading windows where you can place your trades.
-                  Each trading window will be open only for 15 seconds. </li>
-                <li>You may be asked to take a break in the middle of the experiment - please do! 
-                  This is important for the experiment.</li>
-              </ul>
-            </div>
-            <span>
-              <p>To start, enter your Amazon MTurk ID:</p>
-              <input type="text" placeholder="AMT ID" onChange={(e) => { amznRef.current = e.target.value }}/>
-            </span>
-            <div>
-              <button className="btn" onClick={onClick} px="45px" variant="contained" color="primary">Go</button>
-            </div>
-        </div>
-      </div>
-      : 
-      null)
-  );
-}
-
-
-// TODO: fix targets
 const Walkthrough = () => {
   const walkthroughSteps = [
     {
@@ -306,16 +268,57 @@ const Walkthrough = () => {
   );
 };
 
-
-const Modal = () => {
-  const nowIdx = useRecoilValue(nowIdxState);
-  const expStartTS = useRecoilValue(expStartTimeState)
+const IntroModal = ({setAMZN}) => {
+  const [showIntro, setShowIntro] = useState(true);
+  const amznRef = useRef();
   
-  const showWC = (WC && WC_on <= nowIdx && nowIdx < WC_off);
-  const endExp = (nowIdx === TN);
-  const wc_break = WC_off - WC_on;
-  if(showWC) console.log(nowIdx, WC_off);
+  const onClick = () => {
+    setAMZN(amznRef.current);
+    setShowIntro(false);
+    // db hit
+  }
 
+  const introModal = (
+    <div className="modal-backdrop">
+        <div className="modal-content" id="intro">
+            <h1>Welcome!</h1>
+            <div style={{textAlign:'left'}}>
+              <h2>Instructions</h2>
+              <p>This experiment attempts to study behaviors while trading
+              in the stock market. Please ensure you are undisturbed for the next N minutes, and trade 
+              seriously! If you make a profit, you stand to earn an additional bonus matching your profit.
+              At the end of the experiment, you will have a short questionnaire about your experience. </p>
+            </div>
+            <div style={{textAlign: 'left'}}>
+              <h2> Experiment Steps </h2>
+              <ul>
+                <li>The experiment will start with a walkthrough of the trading interface.</li>
+                <li>Initially, trading will be closed. Use this time to observe the market.</li>
+                <li>During the experiment, there will be 2 trading windows where you can place your trades.
+                  Each trading window will be open only for 15 seconds. </li>
+                <li>You may be asked to take a break in the middle of the experiment - please do! 
+                  This is important for the experiment.</li>
+              </ul>
+            </div>
+            <span>
+              <p>To start, enter your Amazon MTurk ID:</p>
+              <input type="text" placeholder="AMT ID" onChange={(e) => { amznRef.current = e.target.value }}/>
+            </span>
+            <div>
+              <button className="btn" onClick={onClick} px="45px" variant="contained" color="primary">Go</button>
+            </div>
+        </div>
+      </div>
+  );
+
+  return (showIntro ? introModal : null);
+}
+
+
+const WCModal = ({nowIdx}) => {
+  const expStartTS = useRecoilValue(expStartTimeState)
+  const showWC = (WC && WC_on <= nowIdx && nowIdx < WC_off);
+  const wc_break = WC_off - WC_on;
   const watercoolerModal = (
     <div className="modal-backdrop">
       <div className="modal-content">
@@ -331,7 +334,11 @@ const Modal = () => {
       </div>
     </div>
   );
+  return (showWC ? watercoolerModal : null);
+};
 
+const OutroModal = ({nowIdx}) => {
+  const endExp = (nowIdx === TN);
   const endModal = (
     <div className="modal-backdrop">
       <div className="modal-content">
@@ -339,9 +346,20 @@ const Modal = () => {
       </div>
     </div>
   );
-  
-  return (showWC ? watercoolerModal : (endExp ? endModal : null));
-};
+  return (endExp ? endModal : null);
+}
+
+
+const Modal = ({setAMZN}) => {
+  const nowIdx = useRecoilValue(nowIdxState);
+  return (
+    <>
+      <IntroModal setAMZN={setAMZN} />
+      <WCModal nowIdx={nowIdx} />
+      <OutroModal nowIdx={nowIdx} />
+    </>
+  );
+}
 
 
 const StateManager = ({expPause}) => {
@@ -364,17 +382,11 @@ const Main = () => {
   const setExpStartTime = useSetRecoilState(expStartTimeState);
   const [amznID, setAMZN] = useRecoilState(amznIDState)
 
-  const display = (amznID !== '') 
-    ? <>
-      <Walkthrough />
-      <MarketScreen expPause={expPause} setExpPause={setExpPause} setExpStartTime={setExpStartTime}/>
-    </>
-    : <Intro setAMZN={setAMZN}/>
-
   return (
     <div className="App-container">
-      <Modal />
-      {display}
+      <Modal setAMZN={setAMZN}/>
+      {amznID !== '' ? <Walkthrough /> : null}
+      <MarketScreen expPause={expPause} setExpPause={setExpPause} setExpStartTime={setExpStartTime}/>
       <StateManager expPause={expPause}/>
     </div>
   );
@@ -401,7 +413,12 @@ const MarketScreen = ({expPause, setExpPause, setExpStartTime}) => {
 
   useEffect(() => updateDataList([prevCurr["currentTS"], prevCurr["currentPrice"]]), [prevCurr]);
 
-  
+  const handleStart = () => {
+    setExpPause(false); 
+    setExpStartTime(Date.now());
+    // db hit: exp start time, snapshot
+  };
+
   return (
     <>
       <StockDisplay prevCurr={prevCurr} />
@@ -413,10 +430,7 @@ const MarketScreen = ({expPause, setExpPause, setExpStartTime}) => {
       <div className="start-exp">
         <button 
           className="btn" 
-          onClick={() => {
-            setExpPause(false); 
-            setExpStartTime(Date.now());
-          }}
+          onClick={handleStart}
           disabled={!expPause}>Start
         </button>
       </div>
@@ -561,6 +575,9 @@ const TradingPanel = ({isTradeTime, prevCurr: {currentPrice, prevPrice}}) => {
       buy ? cash - (qty0 * currentPrice) :  cash + (qty0 * currentPrice)), 
       2);
     const nextStock = (buy ? stock + qty0 :  stock - qty0);
+    
+    // db hit: current state, txn, next state
+
     setCash(nextCash);
     setStock(nextStock);
     setBuySell({buy:false, sell: false});
