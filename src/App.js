@@ -153,14 +153,28 @@ const Intro = ({setAMZN}) => {
   return (
     ( showIntro ? 
       <div className="modal-backdrop">
-        <div className="modal-content">
+        <div className="modal-content" id="intro">
             <h1>Welcome!</h1>
-            <p>Observe the market. When the Trading Window opens you will have 15 seconds 
-              to place a trade. After that, you will take a break from the market. When you return,
-              there will be another trading window of 15 seconds. Make sure you place the trade you want
-              before the 15 seconds are up.</p>
+            <div style={{textAlign:'left'}}>
+              <h2>Instructions</h2>
+              <p>This experiment attempts to study behaviors while trading
+              in the stock market. Please ensure you are undisturbed for the next N minutes, and trade 
+              seriously! If you make a profit, you stand to earn an additional bonus matching your profit.
+              At the end of the experiment, you will have a short questionnaire about your experience. </p>
+            </div>
+            <div style={{textAlign: 'left'}}>
+              <h2> Experiment Steps </h2>
+              <ul>
+                <li>The experiment will start with a walkthrough of the trading interface.</li>
+                <li>Initially, trading will be closed. Use this time to observe the market.</li>
+                <li>During the experiment, there will be 2 trading windows where you can place your trades.
+                  Each trading window will be open only for 15 seconds. </li>
+                <li>You may be asked to take a break in the middle of the experiment - please do! 
+                  This is important for the experiment.</li>
+              </ul>
+            </div>
             <span>
-              <p>Get their details here...</p>
+              <p>To start, enter your Amazon MTurk ID:</p>
               <input type="text" placeholder="AMT ID" onChange={(e) => { amznRef.current = e.target.value }}/>
             </span>
             <div>
@@ -389,7 +403,7 @@ const StockDisplay = ({prevCurr: {currentTS, currentPrice, prevPrice}} ) => {
   const TitleBar = () => {
     return (
       <div className="title-container">
-        <h1 className="ticker-name">USD/MRS</h1>
+        <h1 className="ticker-name">TSLA</h1>
         <Ticker type='bold' curr={currentPrice} diff={priceDiff}/>
       </div>
     );
