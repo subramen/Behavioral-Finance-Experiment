@@ -200,22 +200,29 @@ const Walkthrough = () => {
       placement: 'center'
     },
     {
-      target: '#stock-plot',
+      target: '.stock-plot',
       title: 'Price Graph',
-      content: <p>Keep track of the changes in the exchange rate here.<br/><br/>The dashed line indicates the initial exchange rate.</p>,
+      content: "Track the stock's price here",
       event: 'hover',
       offset: 0,
     },
+    // {
+    //   target: '#percent-tick',
+    //   content: 'Indicates the % change from the initial exchange rate.',
+    //   event: 'hover',
+    //   offset: 0,
+    // },
     {
-      target: '#percent-tick',
-      content: 'Indicates the % change from the initial exchange rate.',
-      event: 'hover',
-      offset: 0,
-    },
-    {
-      target: '#status-message',
+      target: '#msg',
       title: 'Trading Window Status',
       content: <p>You may place trades only when the window is open.<br/><br/>The trading window will open twice during the experiment.</p>,
+      event: 'hover',
+      placement: 'auto'
+    },
+    {
+      target: '#trade-fieldset',
+      title: 'Trading Panel',
+      content: 'Place your trades here. Click Next to learn how...',
       event: 'hover',
       placement: 'auto'
     },
@@ -229,7 +236,7 @@ const Walkthrough = () => {
     {
       target: '.inputBox',
       title: 'Placing a Trade - Step 2/3',
-      content: 'Enter the number of units you want to trade (0 or more)...',
+      content: 'Enter the number of stocks you want to trade (0 or more)...',
       event: 'hover',
       placement: 'auto'
     },
@@ -243,7 +250,28 @@ const Walkthrough = () => {
     {
       target: '.status-table',
       title: 'Assets',
-      content: <p>Here you can see your current holdings, net worth (cash + stock), and your Profit/Loss since the start of the experiment.<br/><br/>You will start with $1000 and 10 units of the currency.</p>,
+      content: 'Track your assets here. Click Next to learn more...',
+      event: 'hover',
+      placement: 'auto'
+    },
+    {
+      target: '.status-cash',
+      title: 'Available Cash',
+      content: 'You start with $1000. Buying stock will reduce available cash. Selling stock will increase it.',
+      event: 'hover',
+      placement: 'auto'
+    },
+    {
+      target: '.status-stock',
+      title: 'Available Stock',
+      content: 'You start with 10 stocks. Buy more if you think the stock will go up. Sell if you think it will go down.',
+      event: 'hover',
+      placement: 'auto'
+    },
+    {
+      target: '.status-pnl',
+      title: 'Profit/Loss',
+      content: 'Track your net worth and profit/loss here. At the end of the experiment you want your net worth to be more than when you started!',
       event: 'hover',
       placement: 'auto'
     },
@@ -580,7 +608,7 @@ const TradingPanel = ({isTradeTime, prevCurr: {currentPrice, prevPrice}}) => {
   return (
     <div className="trading-panel">
       {maxQtyStatus}
-      <fieldset >
+      <fieldset id="trade-fieldset">
         <div className="content" style={{marginTop: '10px'}}>
           <div className="input" style={{marginBottom: '30px'}}>
             <BuySellB />
@@ -612,15 +640,15 @@ const StatusTable = ({prevCurr: {currentPrice, prevPrice}}) => {
   return (
     <table className="status-table">
       <tbody>
-        <tr>
+        <tr className="status-cash">
           <th>Cash</th>
           <td>${cashRound}</td>
         </tr>
-        <tr>
+        <tr className="status-stock">
           <th>Stocks Held</th>
           <td>{stock}</td>
         </tr>
-        <tr>
+        <tr className="status-pnl">
           <th>Net Worth/P&L</th>
           <td>{getPF()}</td>
         </tr>
