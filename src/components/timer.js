@@ -31,7 +31,7 @@ export default class Countdown extends React.Component {
 	}
 
 	render() {
-		const { days, hours, minutes, seconds } = this.state;
+		const { minutes, seconds } = this.state;
 
         if(!seconds) {
 			return null;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     RecoilRoot,
     atom,
@@ -13,6 +13,7 @@ import { stats } from './stats'
 import Countdown from './components/timer'
 import Joyride from 'react-joyride';
 import {Line} from 'react-chartjs-2';
+import 'chartjs-plugin-annotation';
 import './App.css';
 
 
@@ -20,23 +21,36 @@ import './App.css';
 const API_URL = 'http://localhost:5000';
 
 const WC = true
-const TIME_TO_TRADE = 15;
+const WC_DURATION = 0.25 * 60;
+const TIME_TO_TRADE = 20;
 
 const T1 = 10
 const WC_on = T1 + TIME_TO_TRADE
-const WC_off = WC_on + 3 * 60
-const T2 = WC_off + 20
-const TN = T2 + 60 
-const price0 = 0
+const WC_off = WC_on + WC_DURATION
+const T2 = WC_off + 5
+const TN = T2 + 30 
+
 const initCash = 1000
+const initStock = 10
+
+const tsToTimeStr = (d) => {
+  const padTime = (x) => x.toString().padStart(2, "0");
+  return padTime(d.getHours()) + ":" + padTime(d.getMinutes()) + ":" + padTime(d.getSeconds());
+}
 
 
+///////////////////////
+// RECOIL ATOMS/SELECTORS
+///////////////////////
 
-
+const amznIDState = atom({
+  key: 'amznID',
+  default: '',
+});
 
 const expStartTimeState = atom({
   key: 'expStartTS',
-  default: Date.now(),
+  default: null,
 })
 
 const nowIdxState = atom({
@@ -44,13 +58,11 @@ const nowIdxState = atom({
     default: 0, 
 });
 
-const amznIDState = atom({
-  key: 'amznID',
-  default: '',
-});
 
-
-
+const price0 = atom({
+  key: 'price0',
+  default: 0
+})
 
 const fetchSingleQuote = selector({
   key: 'fetchSingleQuote',
@@ -70,6 +82,9 @@ const dataList = atom({
   },
 });
 
+
+
+
 const selectDataList = selector({
   key: 'selectData',
   get: ({get}) => {
@@ -78,16 +93,16 @@ const selectDataList = selector({
   set: ({get, set}, [currentTS, currentPrice]) => {
     if (currentTS && currentPrice) {
       const {labels, quotes, timestamps} = get(dataList);
-      const padTime = (x) => x.toString().padStart(2, "0");
-      const d = new Date(currentTS * 1000);
-      const currentLabel = padTime(d.getHours()) + ":" + padTime(d.getMinutes()) + ":" + padTime(d.getSeconds());
+      const p0 = get(price0);
+      const currentLabel = tsToTimeStr(new Date(currentTS * 1000));
 
       const newObj = {
         "labels": [...labels, currentLabel], 
         "quotes": [...quotes, currentPrice], 
         "timestamps": [...timestamps, currentTS]
       }; 
-      console.log(currentTS, currentLabel);
+
+      if (!p0) set(price0, currentPrice);
       set(dataList, newObj);
     }
   }
@@ -105,6 +120,25 @@ const stockState = atom({
   default: 10,
 });
 
+const getWinnings = selector({
+  key: 'getWinnings',
+  get: ({get}) => {
+    const {quotes} = get(dataList);
+    if (quotes) { 
+      const p0 = get(price0);
+      const stock = get(stockState);
+      const cash = get(cashState);
+      const pNow = quotes[quotes.length - 1];
+      const pf0 = stats.precisionRound(initStock * p0, 2) + initCash
+      const pfNow = stats.precisionRound(stock * pNow, 2) + cash
+      return pfNow - pf0
+    }
+    else {
+      return null;
+    }
+  }
+});
+
 const buySellState = atom({
   key: 'buySellState',
   default: {
@@ -116,7 +150,12 @@ const buySellState = atom({
 const inputQty = atom({
   key: 'inputQtyState',
   default: 0,
-})
+});
+
+const RNGState = atom({
+  key: 'rng',
+  default: 0
+});
 
 
 const isTimeToTrade2 = selector({
@@ -135,10 +174,11 @@ const isTimeToTrade = selector({
     const nowIdx = get(nowIdxState);
     const val = ((T1 <= nowIdx && nowIdx < WC_on) 
         || (T2 <= nowIdx && nowIdx < T2 + TIME_TO_TRADE));
-    if(val) console.log("time to trade", nowIdx);
     return val;
   }
 });
+
+
 
 export default function App() {
   return (
@@ -337,26 +377,49 @@ const WCModal = ({nowIdx}) => {
   return (showWC ? watercoolerModal : null);
 };
 
-const OutroModal = ({nowIdx}) => {
+const OutroModal = ({nowIdx, setExpPause}) => {
   const endExp = (nowIdx === TN);
-  const endModal = (
-    <div className="modal-backdrop">
-      <div className="modal-content">
-          <h1>Experiment over</h1>
+  const winnings = useRecoilValue(getWinnings);
+  const setRNG = useSetRecoilState(RNGState);
+  let rng = 0;
+  let endModal = null;
+  
+  if (endExp) {
+    rng = 12345;
+    setRNG(rng);
+    // setExpPause(true);
+
+    // db hit
+
+    endModal = (
+      <div className="modal-backdrop">
+        <div className="modal-content">
+            <h1>Experiment complete!</h1>
+            <div style={{textAlign: 'left'}}>
+              <p>Thank you for participating! Your winnings today are ${winnings}. 
+              If you are selected as a winner, we will reach out.
+              </p>
+            </div>
+            <div style={{textAlign: 'left'}}>
+              <p> Make a note of your unique ID: {rng}</p>
+              <p>Enter this carefully in Amazon MTurk to receive your compensation.</p>
+            </div>
+        </div>
       </div>
-    </div>
-  );
-  return (endExp ? endModal : null);
+    );
+  }
+
+  return endModal;
 }
 
 
-const Modal = ({setAMZN}) => {
+const Modal = ({setAMZN, setExpPause}) => {
   const nowIdx = useRecoilValue(nowIdxState);
   return (
     <>
       <IntroModal setAMZN={setAMZN} />
       <WCModal nowIdx={nowIdx} />
-      <OutroModal nowIdx={nowIdx} />
+      <OutroModal nowIdx={nowIdx} setExpPause={setExpPause}/>
     </>
   );
 }
@@ -384,7 +447,7 @@ const Main = () => {
 
   return (
     <div className="App-container">
-      <Modal setAMZN={setAMZN}/>
+      <Modal setAMZN={setAMZN} setExpPause={setExpPause}/>
       {amznID !== '' ? <Walkthrough /> : null}
       <MarketScreen expPause={expPause} setExpPause={setExpPause} setExpStartTime={setExpStartTime}/>
       <StateManager expPause={expPause}/>
@@ -398,18 +461,19 @@ const MarketScreen = ({expPause, setExpPause, setExpStartTime}) => {
   const updateDataList = useSetRecoilState(selectDataList);
   const [prevCurr, setPrevCurr] = useState({});
   const isTradeTime = useRecoilValue(isTimeToTrade);
-  
+
   useEffect(() => {
-    if (quoteLoadable.state === 'hasValue') {
+    if (quoteLoadable.state === 'hasValue' && !expPause) {
       const {prev, curr} = quoteLoadable.contents;
-      setPrevCurr({
+      const prevcurr = {
         "currentTS": curr[0],
         "prevTS": prev[0],
         "currentPrice": curr[1],
         "prevPrice": prev[1]
-      });
+      }
+      setPrevCurr(prevcurr);
     }
-  }, [quoteLoadable]);  
+  }, [quoteLoadable, expPause]);  
 
   useEffect(() => updateDataList([prevCurr["currentTS"], prevCurr["currentPrice"]]), [prevCurr]);
 
@@ -425,7 +489,7 @@ const MarketScreen = ({expPause, setExpPause, setExpStartTime}) => {
       <StatusMessage isTradeTime={isTradeTime}/>
       <StatusCountdown isTradeTime={isTradeTime} />
       <TradingPanel isTradeTime={isTradeTime} prevCurr={prevCurr}/>
-      <StatusTable prevCurr={prevCurr}/>
+      <StatusTable prevCurr={prevCurr} expPause={expPause}/>
       
       <div className="start-exp">
         <button 
@@ -453,6 +517,7 @@ const StockDisplay = ({prevCurr: {currentTS, currentPrice, prevPrice}} ) => {
 
   const StockChart = () => {
     const {labels, quotes} = useRecoilValue(selectDataList);
+    const p0 = useRecoilValue(price0)
   
     const chartMeta = {
       labels: [...labels],
@@ -484,28 +549,41 @@ const StockDisplay = ({prevCurr: {currentTS, currentPrice, prevPrice}} ) => {
                     type: 'line',
                     mode: 'horizontal',
                     scaleID: 'y-axis-0',
-                    value: price0,
+                    value: p0,
                     borderColor: chartMeta.lineColor,
                     borderWidth: 1,
                     borderDash: [10, 5],
                   },
                   {
                     type: 'line',
-                    mode: 'vertical',
                     scaleID: 'x-axis-0',
-                    value: T1,
+                    value: T1 / 5,
                     borderColor: 'purple',
                     borderWidth: 3,
-                    label: {backgroundColor: 'white', enabled:true, fontColor: 'purple', content:'Trade 1'},
+                    label: {backgroundColor: 'white', enabled:true, fontColor: 'purple', content:'Trade Window 1'},
+                  },
+                  {
+                    type: 'box',
+                    xScaleID: 'x-axis-0',
+                    // yScaleID: 'y-axis-0',
+                    xMin: T1 / 5,
+                    xMax: (T1 + TIME_TO_TRADE) / 5,
+                    backgroundColor: 'rgba(255, 99, 132, 0.25)'
                   },
                   {
                     type: 'line',
-                    mode: 'vertical',
                     scaleID: 'x-axis-0',
-                    value: T2,
+                    value: T2 / 5,
                     borderColor: 'purple',
                     borderWidth: 3,
-                    label: {backgroundColor: 'white', enabled: true, fontColor: 'purple', content:'Trade 2'},
+                    label: {backgroundColor: 'white', enabled:true, fontColor: 'purple', content:'Trade Window 2'},
+                  },
+                  {
+                    type: 'box',
+                    xScaleID: 'x-axis-0',
+                    xMin: T2 / 5,
+                    xMax: (T2 + TIME_TO_TRADE) / 5,
+                    backgroundColor: 'rgba(255, 99, 132, 0.25)'
                   },
                   ],
               },
@@ -514,7 +592,6 @@ const StockDisplay = ({prevCurr: {currentTS, currentPrice, prevPrice}} ) => {
       </div>
     );
   };
-
   return (
     <>
       <TitleBar />
@@ -546,8 +623,6 @@ const StatusCountdown = () => {
 
   return elt;
 };
-
-
 
 
 const TradingPanel = ({isTradeTime, prevCurr: {currentPrice, prevPrice}}) => {
@@ -639,18 +714,14 @@ const TradingPanel = ({isTradeTime, prevCurr: {currentPrice, prevPrice}}) => {
   );
 };
 
-const StatusTable = ({prevCurr: {currentPrice, prevPrice}}) => {
+const StatusTable = ({prevCurr: {currentPrice, prevPrice}, expPause}) => {
   const stock = useRecoilValue(stockState);
   const cash = useRecoilValue(cashState);
   const cashRound = Math.round(cash*100)/100;
 
   const getPF = () => {
     const currPF = stats.precisionRound(stock * currentPrice, 2) + cash;
-    const prevPF = stats.precisionRound(stock * prevPrice, 2) + initCash;
-    const priceDiff = (
-      prevPrice ? 
-      Math.round((currPF - prevPF + Number.EPSILON) * 100) / 100 : 
-      0);
+    const priceDiff = Math.round(((currentPrice - prevPrice) * stock + Number.EPSILON) * 100) / 100
     return <Ticker type='lite' curr={currPF} diff={priceDiff}/>;
   };
   
