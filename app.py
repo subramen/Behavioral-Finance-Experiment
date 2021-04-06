@@ -15,7 +15,7 @@ app = Flask(__name__, static_folder='build/', static_url_path='/')
 cors = CORS(app)
 
 TEST = os.environ['IS_TEST'] == 'True'
-loguru.info(f'Test Run: {TEST}')
+logger.info(f'Test Run: {TEST}')
 
 INTERVAL = 5
 TS0 = -1
