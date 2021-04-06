@@ -30,6 +30,7 @@ const WC_off = WC_on + WC_DURATION
 const T2 = WC_off + 5
 const TN = T2 + 30 
 
+
 const initCash = 1000
 const initStock = 10
 
@@ -358,6 +359,8 @@ const IntroModal = ({setAMZN}) => {
 const WCModal = ({nowIdx}) => {
   const expStartTS = useRecoilValue(expStartTimeState)
   const showWC = (WC && WC_on <= nowIdx && nowIdx < WC_off);
+  console.log(nowIdx, WC_on, WC_off)
+
   const wc_break = WC_off - WC_on;
   const watercoolerModal = (
     <div className="modal-backdrop">
@@ -475,7 +478,7 @@ const MarketScreen = ({expPause, setExpPause, setExpStartTime}) => {
     }
   }, [quoteLoadable, expPause]);  
 
-  useEffect(() => updateDataList([prevCurr["currentTS"], prevCurr["currentPrice"]]), [prevCurr]);
+  useEffect(() => updateDataList([prevCurr["currentTS"], prevCurr["currentPrice"]]), [prevCurr, updateDataList]);
 
   const handleStart = () => {
     setExpPause(false); 

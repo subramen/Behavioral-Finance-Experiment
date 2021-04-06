@@ -9,12 +9,13 @@ import time
 import random
 from loguru import logger
 import json
-
+import os
 
 app = Flask(__name__, static_folder='build/', static_url_path='/')
 cors = CORS(app)
 
-TEST = True
+TEST = os.environ['IS_TEST'] == 'True'
+loguru.info(f'Test Run: {TEST}')
 
 INTERVAL = 5
 TS0 = -1
