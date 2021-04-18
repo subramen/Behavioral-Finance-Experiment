@@ -13,11 +13,11 @@ import os
 import psycopg2
 
 TEST = os.environ['IS_TEST'] == 'True'
+DATABASE_URL = os.environ['DATABASE_URL'] 
 
 app = Flask(__name__, static_folder='build/', static_url_path='/')
 cors = CORS(app)
 
-DATABASE_URL = os.environ['DATABASE_URL'] 
 INTERVAL = 5
 TS0 = -1
 TABLENAME = ''
@@ -28,14 +28,16 @@ HEADERS = {
 }
 logger.info(f'Test Run: {TEST}')
 
-# TODO: Change to pg
+
 # conn = sqlite3.connect('yfinance.db', check_same_thread=False)
+# conn = psycopg2.connect("dbname=subramen user=postgres")
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 # TODO: implement users db in pg
 
 
 def get_curr_quote():
+    logger.info("get_curr_quote()")
     if TEST:
         d = random.randint(2, 20)
     else:
@@ -53,7 +55,11 @@ def create_db():
 def insert_db(ts, price):
     logger.info(f"Inserting in DB {ts}, {price}")
     c = conn.cursor()
-    c.execute(f"INSERT INTO {TABLENAME} VALUES (%s, %s)", (ts, price))
+    try:
+        c.execute(f"INSERT INTO {TABLENAME} VALUES (%s, %s)", (ts, price))
+    except Exception as e:
+        logger.error("Insertion error!", e)
+        pass
     conn.commit()
 
 
