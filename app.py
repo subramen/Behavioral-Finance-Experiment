@@ -53,17 +53,17 @@ def create_db():
 def insert_db(ts, price):
     logger.info(f"Inserting in DB {ts}, {price}")
     c = conn.cursor()
-    c.execute(f"INSERT INTO {TABLENAME} VALUES (?, ?)", (ts, price))
+    c.execute(f"INSERT INTO {TABLENAME} VALUES (%s, %s)", (ts, price))
     conn.commit()
 
 
 def select_db(idx: Union[int, tuple]):
     c = conn.cursor()
     if isinstance(idx, tuple):
-        c.execute(f"SELECT * FROM {TABLENAME} WHERE ts BETWEEN ? AND ?", idx)
+        c.execute(f"SELECT * FROM {TABLENAME} WHERE ts BETWEEN %s AND %s", idx)
         return c.fetchall()
     else:
-        c.execute(f"SELECT * FROM {TABLENAME} WHERE ts=?", (idx,))
+        c.execute(f"SELECT * FROM {TABLENAME} WHERE ts=%s", (idx,))
         return c.fetchone()
 
 
