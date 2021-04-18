@@ -10,13 +10,14 @@ import random
 from loguru import logger
 import json
 import os
+import psycopg2
+
+TEST = os.environ['IS_TEST'] == 'True'
 
 app = Flask(__name__, static_folder='build/', static_url_path='/')
 cors = CORS(app)
 
-TEST = os.environ['IS_TEST'] == 'True'
-logger.info(f'Test Run: {TEST}')
-
+DATABASE_URL = os.environ['DATABASE_URL'] 
 INTERVAL = 5
 TS0 = -1
 TABLENAME = ''
@@ -24,11 +25,14 @@ URL = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes"
 HEADERS = {
     'x-rapidapi-key': "57a6f99753mshf2f96c7d07b7f5fp1892c3jsn4bf4d977a411",
     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
-    }
+}
+logger.info(f'Test Run: {TEST}')
 
+# TODO: Change to pg
+# conn = sqlite3.connect('yfinance.db', check_same_thread=False)
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
-conn = sqlite3.connect('yfinance.db', check_same_thread=False)
-# conn = sqlite3.connect('users.db')
+# TODO: implement users db in pg
 
 
 def get_curr_quote():
@@ -47,6 +51,7 @@ def create_db():
     
 
 def insert_db(ts, price):
+    logger.info(f"Inserting in DB {ts}, {price}")
     c = conn.cursor()
     c.execute(f"INSERT INTO {TABLENAME} VALUES (?, ?)", (ts, price))
     conn.commit()
@@ -119,6 +124,7 @@ def setup():
     create_db()
     sch = BackgroundScheduler()
     sch.add_job(get_curr_quote, 'interval', seconds=INTERVAL)
+    logger.info('Job scheduler started')
     sch.start()
 
 
