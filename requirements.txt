@@ -4,3 +4,4 @@ loguru
 requests
 flask_cors
 apscheduler
+psycopg2
